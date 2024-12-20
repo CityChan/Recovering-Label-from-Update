@@ -65,17 +65,13 @@ def estimate_static_RLU_with_posterior(args, N, mu, new_mu, O):
 def estimate_static_RLU(args, model, aux_dataset):
 
     model.train()
-    criterion = nn.CrossEntropyLoss()
-
     aux_loader = torch.utils.data.DataLoader(aux_dataset, batch_size=args.batch_size, shuffle=True)
 
     model.train()
     predictions = []
     predictions_softmax = []
     ground_truths = []
-    criterion = nn.CrossEntropyLoss()
     for batch_idx, (inputs, targets) in enumerate(aux_loader):
-        labels, existences, num_instances, num_instances_nonzero = get_label_stats(targets, args.n_classes)
         inputs, targets = inputs.cuda(), targets.cuda(non_blocking=True)
         inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
 
