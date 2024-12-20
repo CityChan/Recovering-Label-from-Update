@@ -91,3 +91,4 @@ average_cAcc = np.mean(np.array(cAcc))
 average_iAcc = np.mean(np.array(iAcc))
 
 print('average cAcc: ', average_cAcc)
+print('average iAcc: ', average_iAcc)
