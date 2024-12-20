@@ -15,7 +15,7 @@ class Client(object):
         self.idx = idx
         channel = 3
         self.model = get_model(model_name=model_name,
-                               net_params=(args.n_classes, channel, self.hidden),
+                               net_params=(args.n_classes, channel, self.args.hidden),
                                device=device,
                                n_hidden=1,
                                n_dim=300,
