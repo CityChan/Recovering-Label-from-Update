@@ -12,7 +12,7 @@ def estimate_static_RLU_with_posterior(args, N, mu, new_mu, O):
     count = 0
     unit = args.local_epochs
     last_epoch = args.local_epochs - 1
-    while max_diff >= 0.1 and count < 5:
+    while max_diff >= 0.1 and count < 2:
         count += 1
         n = [round(i / args.local_epochs) for i in N]
 
