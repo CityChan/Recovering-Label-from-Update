@@ -30,8 +30,8 @@ def estimate_static_RLU(args, model, aux_dataset):
         predictions.append(np.array(outputs.detach().cpu()))
         predictions_softmax.append(np.array(probs.detach().cpu()))
 
-    mis_predictions_maxrix = matrix(predictions, ground_truths)
-    mis_predictions_softmax = matrix(predictions_softmax, ground_truths)
+    mis_predictions_maxrix = matrix(args,predictions, ground_truths)
+    mis_predictions_softmax = matrix(args, predictions_softmax, ground_truths)
     mu = np.zeros(args.n_classes)
     for i in range(args.n_classes):
         mu[i] = (np.sum(mis_predictions_maxrix[i]) - mis_predictions_maxrix[i, i]) / (args.n_classes - 1)
@@ -43,8 +43,6 @@ def estimate_static_RLU(args, model, aux_dataset):
 
 
 def estimated_entropy_from_grad(args, shift, bias, B):
-    coefs = []
-    values = []
     n = args.n_classes
     solution = [0] * n
 
@@ -79,7 +77,7 @@ def learn_stat_vector(args, n, predictions, ground_truths):
     return np.array(mis_predictions)
 
 
-def learn_stat(k, n, predictions, ground_truths):
+def learn_stat(args, k, n, predictions, ground_truths):
     mis_predictions = []
     for i in range(len(predictions) - 1):
         for j in range(args.batch_size):
@@ -96,7 +94,7 @@ def matrix(args, predictions, ground_truths):
     mis_predictions_maxrix = np.zeros((args.n_classes, args.n_classes))
     for i in range(args.n_classes):
         for j in range(args.n_classes):
-            mis_predictions_maxrix[i][j] = np.mean(learn_stat(i, j, predictions, ground_truths))
+            mis_predictions_maxrix[i][j] = np.mean(learn_stat(args, i, j, predictions, ground_truths))
 
     return mis_predictions_maxrix
 
