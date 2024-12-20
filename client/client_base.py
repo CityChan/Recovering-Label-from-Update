@@ -129,8 +129,8 @@ class Client(object):
                 res, metrics = get_irlg_res(cls_rec_probs=cls_rec_probs,
                                             b_grad=b_grad_epochs,
                                             gt_label=targets_epochs,
-                                            num_classes=args.n_classes,
-                                            num_images=args.batch_size * args.local_epochs,
+                                            num_classes=self.args.n_classes,
+                                            num_images=self.args.batch_size * self.args.local_epochs,
                                             simplified=False)
 
                 average_acc += metrics[1]
