@@ -137,8 +137,8 @@ class Client(object):
                 average_irec += metrics[2]
                 average_Leacc += metrics[0]
 
-                w_grad_epochs = torch.zeros([args.n_classes, latent_dim])
-                b_grad_epochs = torch.zeros([args.n_classes])
+                w_grad_epochs = torch.zeros([self.args.n_classes, latent_dim])
+                b_grad_epochs = torch.zeros([self.args.n_classes])
                 targets_epochs = []
 
         average_Leacc = average_Leacc / count_computed
