@@ -42,7 +42,7 @@ def args_parser():
 
     parser.add_argument('--gamma', type=float, default=0.1, help='LR is multiplied by gamma on schedule.')
 
-    parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
+    parser.add_argument('--momentum', default=0.0, type=float, metavar='M',
                     help='momentum')
     
     parser.add_argument('--weight-decay', '--wd', default=5e-4, type=float,
