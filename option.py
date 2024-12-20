@@ -14,6 +14,8 @@ def args_parser():
 
     parser.add_argument('-d', '--dataset', default='CIFAR10', type=str, help='SVHN, CIFAR10, CIFAR100, Tiny-ImageNet')
 
+    parser.add_argument('-p', '--prop', default=0.1, type=float, help='proportion of aux data')
+
     parser.add_argument('-m', '--model', default='resnet', type=str, help='vgg, resnet, lenet')
 
     parser.add_argument('--hidden', default=512, type=int, help='dimension of the hidden embeddings')
