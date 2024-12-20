@@ -18,7 +18,7 @@ print(args)
 
 # Generating data partitions based on Dirichlet distribution
 Loaders_train,Loaders_test = get_dataloaders_Dirichlet(n_clients = args.n_clients, alpha=args.alpha, rand_seed = 0,
-                                                       dataset = args.dataset, batch_size = args.batch_size, device = device)
+                                                       dataset = args.dataset, batch_size = args.batch_size)
 
 
 K = int(args.sampling_rate*args.n_clients)
