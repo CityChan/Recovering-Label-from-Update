@@ -44,6 +44,6 @@ def args_parser():
     parser.add_argument('-c', '--checkpoint', default='./checkpoints', type=str, metavar='PATH',
                     help='path to save checkpoint')
     
-    args = parser.parse_args('')
+    args = parser.parse_args(' ')
     return args
 
