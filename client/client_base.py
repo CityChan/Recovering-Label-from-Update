@@ -122,6 +122,16 @@ class Client(object):
         average_irec = 0
         average_cAcc = 0
 
+        count_computed = 0
+
+        count = 0
+        latent_dim = 4096
+        b_grad_epochs = torch.zeros([self.args.n_classes])
+        w_grad_epochs = torch.zeros([self.args.n_classes, latent_dim])
+        targets_epochs = []
+        self.mu, _ = estimate_static_RLU(copy.deepcopy(self.model))
+        self.O = torch.zeros(4096)
+
         predictions_softmax = estimate_static_RLU(self.args, self.model,self.aux_dataset)
 
         for batch_idx, (inputs, targets) in enumerate(self.trainloader):

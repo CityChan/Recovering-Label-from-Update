@@ -34,9 +34,12 @@ def args_parser():
     parser.add_argument('--lr', '--learning-rate', default=0.01, type=float,
                     metavar='LR', help='initial learning rate')
 
-    parser.add_argument('--scheme', default='fedavg',type=str,
+    parser.add_argument('--scheme', default='RLU',type=str,
+                        help='RLU, iRLG, LLGp, ZLGp')
+
+    parser.add_argument('--fl_scheme', default='fedavg', type=str,
                         help='fedavg, fedprox, feddyn, scaffold')
-    
+
     parser.add_argument('--gamma', type=float, default=0.1, help='LR is multiplied by gamma on schedule.')
 
     parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
