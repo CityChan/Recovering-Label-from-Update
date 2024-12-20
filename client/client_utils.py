@@ -98,10 +98,6 @@ def estimate_static_RLU(args, model, aux_dataset):
 def estimated_entropy_from_grad(args, shift, bias, B):
     n = args.n_classes
     solution = [0] * n
-    print('shift:')
-    print(shift)
-    print('bias:')
-    print(bias)
     bias = -np.array(bias)
 
     n = [0] * args.n_classes
