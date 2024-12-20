@@ -11,7 +11,7 @@ from client_utils import estimate_static_RLU, estimated_entropy_from_grad, learn
 import numpy as np
 
 class Client(object):
-    def __init__(self, args, Loader_train, idx, device, model_name='resnet18',aux_dataset):
+    def __init__(self, args, Loader_train, idx, device, model_name, aux_dataset):
         self.args = args
         self.trainloader = Loader_train
         self.idx = idx
