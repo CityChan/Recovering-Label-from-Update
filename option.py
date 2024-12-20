@@ -16,7 +16,7 @@ def args_parser():
 
     parser.add_argument('-p', '--prop', default=0.1, type=float, help='proportion of aux data')
 
-    parser.add_argument('-m', '--model', default='resnet', type=str, help='vgg, resnet, lenet')
+    parser.add_argument('-m', '--model', default='resnet18', type=str, help='vgg, resnet18, resnet54, lenet')
 
     parser.add_argument('--hidden', default=512, type=int, help='dimension of the hidden embeddings')
 
