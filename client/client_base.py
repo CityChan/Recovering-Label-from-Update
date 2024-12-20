@@ -7,7 +7,7 @@ from models import get_model
 from utils import average_weights,global_acc,AverageMeter
 from llg import get_label_stats,get_emb,post_process_emb,get_irlg_res
 import torch
-from client_utils import estimate_static_RLU, estimated_entropy_from_grad, learn_stat_vector, learn_stat, matrix,matrix_mean_var
+from client.client_utils import estimate_static_RLU, estimated_entropy_from_grad, learn_stat_vector, learn_stat, matrix,matrix_mean_var
 import numpy as np
 
 class Client(object):
