@@ -7,6 +7,7 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from torchvision.datasets import ImageFolder
 from models import get_model
+from client.client_base import Client
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
@@ -73,3 +74,20 @@ global_model = get_model(model_name=args.model,
                          leaky_relu=False).cuda()
 
 global_weights = global_model.state_dict()
+print("==> creating models")
+Clients = []
+for idx in range(args.n_clients):
+    Clients.append(Client(args, Loaders_train[idx], Loaders_test[idx], idx, model_name = args.model))
+
+cAcc = []
+iAcc = []
+for idx in range(args.n_clients):
+    print('client: ', idx)
+    Clients[idx].load_model(global_weights)
+    acc1, acc2 = Clients[idx].iRLG(copy.deepcopy(global_weights))
+    cAcc.append(acc1)
+    iAcc.append(acc2)
+average_cAcc = np.mean(np.array(cAcc))
+average_iAcc = np.mean(np.array(iAcc))
+
+print('average cAcc: ', average_cAcc)
