@@ -62,57 +62,88 @@ class Client(object):
 
         return losses.avg, top1.avg
 
-    def iRLG(self):
+    def iRLG(self,global_weights):
         self.model.train()
 
         average_acc = 0
         average_irec = 0
         average_Leacc = 0
 
+        count_computed = 0
+
+        count = 0
+        latent_dim = 4096
+        w_grad_epochs = torch.zeros([self.args.n_classes, latent_dim])
+        b_grad_epochs = torch.zeros([self.args.n_classes])
+
+        targets_epochs = []
+
         for batch_idx, (inputs, targets) in enumerate(self.trainloader):
             # measure data loading time
-            labels, existences, num_instances, num_instances_nonzero = get_label_stats(targets, self.args.n_classes)
+            labels, existences, num_instances, num_instances_nonzero = get_label_stats(targets, args.n_classes)
 
             inputs, targets = inputs.cuda(), targets.cuda(non_blocking=True)
             inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
 
+            targets_epochs.append(targets)
+
             # compute output
             outputs, _ = self.model(inputs)
             loss = self.criterion(outputs, targets)
-
             self.optimizer.zero_grad()
+            loss.backward()
 
-            grads = torch.autograd.grad(loss, self.model.fc.parameters())
-            grads = list((_.detach().cpu().clone() for _ in grads))
+            self.optimizer.step()
+
+            grads = []
+            for param in self.model.fc.parameters():
+                grads.append(param.grad.detach().cpu().clone())
+
             probs = torch.softmax(outputs, dim=-1)
-            preds = torch.max(probs, 1)[1].cpu()
 
             w_grad, b_grad = grads[-2], grads[-1]
 
-            cls_rec_probs = []
+            w_grad_epochs += w_grad
+            b_grad_epochs += b_grad
 
-            for i in range(self.args.n_classes):
-                cls_rec_emb = get_emb(w_grad[i], b_grad[i])
-                cls_rec_prob = post_process_emb(embedding=cls_rec_emb,
-                                                model=self.model,
-                                                device=self.device,
-                                                alpha=1)
-                cls_rec_probs.append(cls_rec_prob)
+            count += 1
 
-            res, metrics = get_irlg_res(cls_rec_probs=cls_rec_probs,
-                                        b_grad=b_grad,
-                                        gt_label=targets,
-                                        num_classes=self.args.n_classes,
-                                        num_images=self.args.batch_size,
-                                        simplified=False)
-            print(num_instances)
-            average_acc += metrics[1]
-            average_irec += metrics[2]
-            average_Leacc += metrics[0]
+            if count == self.args.local_epochs:
+                self.load_model(global_weights)
+                w_grad_epochs = w_grad_epochs / self.args.local_epochs
+                b_grad_epochs = b_grad_epochs / self.args.local_epochs
+                count = 0
+                count_computed += 1
+                cls_rec_probs = []
 
-        average_Leacc = average_Leacc / len(self.trainloader)
-        average_acc = average_acc / len(self.trainloader)
-        average_irec = average_irec / len(self.trainloader)
+                for i in range(self.args.n_classes):
+                    cls_rec_emb = get_emb(w_grad_epochs[i], b_grad_epochs[i])
+                    cls_rec_prob = post_process_emb(embedding=cls_rec_emb,
+                                                    model=self.model,
+                                                    device=self.device,
+                                                    alpha=1)
+                    cls_rec_probs.append(cls_rec_prob)
+
+                targets_epochs = torch.cat(targets_epochs, dim=0)
+
+                res, metrics = get_irlg_res(cls_rec_probs=cls_rec_probs,
+                                            b_grad=b_grad_epochs,
+                                            gt_label=targets_epochs,
+                                            num_classes=args.n_classes,
+                                            num_images=args.batch_size * args.local_epochs,
+                                            simplified=False)
+
+                average_acc += metrics[1]
+                average_irec += metrics[2]
+                average_Leacc += metrics[0]
+
+                w_grad_epochs = torch.zeros([args.n_classes, latent_dim])
+                b_grad_epochs = torch.zeros([args.n_classes])
+                targets_epochs = []
+
+        average_Leacc = average_Leacc / count_computed
+        average_acc = average_acc / count_computed
+        average_irec = average_irec / count_computed
         print('average acc:', average_acc)
         print('average irec:', average_irec)
         return average_Leacc, average_irec
