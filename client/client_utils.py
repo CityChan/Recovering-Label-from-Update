@@ -7,7 +7,6 @@ import torch
 from llg import get_label_stats,get_emb,post_process_emb,get_irlg_res
 
 def estimate_static_RLU(args, model, aux_dataset):
-    random.seed(42)
     label_dict = {}
     y_aux = np.array(test_dataset.targets)
     K = args.n_classes

@@ -8,6 +8,7 @@ import torchvision.datasets as datasets
 from torchvision.datasets import ImageFolder
 from models import get_model
 from client.client_base import Client
+import random
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
@@ -52,6 +53,7 @@ if args.dataset == 'Tiny':
     test_dataset = ImageFolder(root=test_data_path, transform=apply_transform)
     total_train_dataset = ImageFolder(root=train_data_path, transform=apply_transform)
 
+random.seed(42)
 prop = args.prop
 label_dict = {}
 aux_dict = []
