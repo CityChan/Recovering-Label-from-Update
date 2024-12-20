@@ -12,7 +12,11 @@ def args_parser():
     parser.add_argument('--batch_size', default=64, type=int, metavar='N',
                         help='training batchsize')
 
-    parser.add_argument('-d', '--dataset', default='CIFAR10', type=str, help='FMNIST, CIFAR10, CIFAR100, Tiny-ImageNet')
+    parser.add_argument('-d', '--dataset', default='CIFAR10', type=str, help='SVHN, CIFAR10, CIFAR100, Tiny-ImageNet')
+
+    parser.add_argument('-m', '--model', default='resnet', type=str, help='vgg, resnet, lenet')
+
+    parser.add_argument('--hidden', default=512, type=int, help='dimension of the hidden embeddings')
 
     parser.add_argument('-n', '--n_clients', default=10, type=int)
     
@@ -27,9 +31,7 @@ def args_parser():
     
     parser.add_argument('--lr', '--learning-rate', default=0.01, type=float,
                     metavar='LR', help='initial learning rate')
-    
-    parser.add_argument('--optimizer', default='sgd',type=str,
-                        help='sgd-momentum')
+
     parser.add_argument('--scheme', default='fedavg',type=str,
                         help='fedavg, fedprox, feddyn, scaffold')
     
