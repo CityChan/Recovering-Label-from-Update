@@ -13,6 +13,7 @@ class Client(object):
         self.args = args
         self.trainloader = Loader_train
         self.idx = idx
+        self.device = device
         channel = 3
         self.model = get_model(model_name=model_name,
                                net_params=(args.n_classes, channel, self.args.hidden),
@@ -89,7 +90,7 @@ class Client(object):
                 cls_rec_emb = get_emb(w_grad[i], b_grad[i])
                 cls_rec_prob = post_process_emb(embedding=cls_rec_emb,
                                                 model=self.model,
-                                                device=self.args.device,
+                                                device=self.device,
                                                 alpha=1)
                 cls_rec_probs.append(cls_rec_prob)
 
