@@ -117,7 +117,7 @@ class Client(object):
         print('average irec:', average_irec)
         return average_Leacc, average_irec
 
-    def RLU(self):
+    def RLU(self, global_weights):
         self.model.train()
 
         average_acc = 0
@@ -175,20 +175,20 @@ class Client(object):
                 count = 0
                 count_computed += 1
 
-                n = estimated_entropy_from_grad(new_shift, b_grad_epochs.detach().cpu().tolist(),
+                n = estimated_entropy_from_grad(self.args, new_shift, b_grad_epochs.detach().cpu().tolist(),
                                                 self.args.batch_size * self.args.local_epochs)
                 new_shift_softmax = estimate_static_RLU_with_posterior(n, self.mu, new_mu, self.O)
-                n = estimated_entropy_from_grad(new_shift_softmax,b_grad_epochs.detach().cpu().tolist(), self.args.batch_size*self.args.local_epochs)
+                n = estimated_entropy_from_grad(self.args, new_shift_softmax,b_grad_epochs.detach().cpu().tolist(), self.args.batch_size*self.args.local_epochs)
                 class_existences = [1 if n[i] > 0 else 0 for i in range(len(n))]
                 existences = [1 if num_instances[i] > 0 else 0 for i in range(len(num_instances))]
 
                 cAcc = accuracy_score(existences, class_existences)
                 acc = accuracy_score(num_instances, n)
                 res = np.where(n < num_instances, n, num_instances)
-                labels = range(args.n_classes)
+                labels = range(self.args.n_classes)
                 irec = sum(
                     [n[i] if n[i] <= num_instances[i] else num_instances[i] for i in labels]) / (
-                                   args.batch_size * args.local_epochs)
+                                   self.args.batch_size * self.args.local_epochs)
                 print(num_instances)
                 print(n)
                 print('acc:', acc)
@@ -197,7 +197,7 @@ class Client(object):
                 average_irec += irec
                 average_cAcc += cAcc
 
-                b_grad_epochs = torch.zeros([args.n_classes])
+                b_grad_epochs = torch.zeros([self.args.n_classes])
                 targets_epochs = []
                 self.load_model(global_weights)
 

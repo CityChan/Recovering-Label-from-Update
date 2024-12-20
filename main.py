@@ -97,7 +97,7 @@ for idx in range(args.n_clients):
     if args.scheme == 'iRLG':
         acc1, acc2 = Clients[idx].iRLG()
     if args.scheme == 'RLU':
-        acc1, acc2 = Clients[idx].RLU()
+        acc1, acc2 = Clients[idx].RLU(global_weights)
     cAcc.append(acc1)
     iAcc.append(acc2)
 average_cAcc = np.mean(np.array(cAcc))
