@@ -33,6 +33,10 @@ class Client(object):
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.SGD(self.model.parameters(), lr=args.lr, momentum=args.momentum,
                                    weight_decay=args.weight_decay)
+        if args.model == 'resnet18':
+            self.latent_dim = 512
+        if args.model == 'vgg16':
+            self.latent_dim = 4096
 
     def train(self, epoch):
         self.model.train()
@@ -72,8 +76,7 @@ class Client(object):
         count_computed = 0
 
         count = 0
-        latent_dim = 4096
-        w_grad_epochs = torch.zeros([self.args.n_classes, latent_dim])
+        w_grad_epochs = torch.zeros([self.args.n_classes, self.latent_dim])
         b_grad_epochs = torch.zeros([self.args.n_classes])
 
         targets_epochs = []
@@ -158,12 +161,11 @@ class Client(object):
         count_computed = 0
 
         count = 0
-        latent_dim = 4096
         b_grad_epochs = torch.zeros([self.args.n_classes])
-        w_grad_epochs = torch.zeros([self.args.n_classes, latent_dim])
+        w_grad_epochs = torch.zeros([self.args.n_classes, self.latent_dim])
         targets_epochs = []
         self.mu, _ = estimate_static_RLU(self.args, copy.deepcopy(self.model), self.aux_dataset)
-        self.O = torch.zeros(4096)
+        self.O = torch.zeros(self.latent_dim)
 
         for batch_idx, (inputs, targets) in enumerate(self.trainloader):
             inputs, targets = inputs.cuda(), targets.cuda(non_blocking=True)
