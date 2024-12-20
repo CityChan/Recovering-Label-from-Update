@@ -7,8 +7,10 @@ from models import get_model
 from utils import average_weights,global_acc,AverageMeter
 from llg import get_label_stats,get_emb,post_process_emb,get_irlg_res
 import torch
-from client.client_utils import estimate_static_RLU, estimated_entropy_from_grad, learn_stat_vector, learn_stat, matrix,matrix_mean_var
+from client.client_utils import estimate_static_RLU, estimated_entropy_from_grad, estimate_static_RLU_with_posterior
 import numpy as np
+import copy
+import scipy
 
 class Client(object):
     def __init__(self, args, Loader_train, idx, device, model_name, aux_dataset):
@@ -132,44 +134,76 @@ class Client(object):
         self.mu, _ = estimate_static_RLU(copy.deepcopy(self.model))
         self.O = torch.zeros(4096)
 
-        predictions_softmax = estimate_static_RLU(self.args, self.model,self.aux_dataset)
-
         for batch_idx, (inputs, targets) in enumerate(self.trainloader):
-            # measure data loading time
-            labels, existences, num_instances, num_instances_nonzero = get_label_stats(targets, self.args.n_classes)
-
             inputs, targets = inputs.cuda(), targets.cuda(non_blocking=True)
             inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
-
+            targets_epochs.append(targets)
             # compute output
+
             outputs, _ = self.model(inputs)
             loss = self.criterion(outputs, targets)
+            self.optimizer.zero_grad()
+            loss.backward()
 
-            grads = torch.autograd.grad(loss, self.model.fc.parameters())
-            grads = list((_.detach().cpu().clone() for _ in grads))
-            probs = torch.softmax(outputs, dim=-1)
-            preds = torch.max(probs, 1)[1].cpu()
+            self.optimizer.step()
+            grads = []
+
+            for param in self.model.fc.parameters():
+                grads.append(param.grad.detach().cpu().clone())
 
             w_grad, b_grad = grads[-2], grads[-1]
-            n = estimated_entropy_from_grad(self.args, predictions_softmax, b_grad.detach().cpu().tolist())
-            class_existences = [1 if n[i] > 0 else 0 for i in range(len(n))]
 
-            cAcc = accuracy_score(existences, class_existences)
-            acc = accuracy_score(num_instances, n)
-            res = np.where(n < num_instances, n, num_instances)
-            irec = sum(
-                [n[i] if n[i] <= num_instances[i] else num_instances[i] for i in labels]) / self.args.batch_size
-            print(num_instances)
-            print(n)
-            print('acc:', acc)
-            print('irec:', irec)
-            average_acc += acc
-            average_irec += irec
-            average_cAcc += cAcc
+            b_grad_epochs += b_grad
+            w_grad_epochs += w_grad
+            count += 1
 
-        average_acc = average_acc / len(self.trainloader)
-        average_irec = average_irec / len(self.trainloader)
-        average_cAcc = average_cAcc / len(self.trainloader)
+            if count == self.args.local_epochs:
+                new_mu, new_shift = estimate_static_RLU(self.args, copy.deepcopy(self.model), self.aux_dataset)
+                new_shift = scipy.special.softmax(new_mu)
+
+                targets_epochs = torch.cat(targets_epochs, dim=0)
+                targets_epochs = targets_epochs.tolist()
+
+                num_instances = np.zeros(self.args.n_classes)
+                for k in range(self.args.n_classes):
+                    num_instances[k] = targets_epochs.count(k)
+
+                b_grad_epochs = b_grad_epochs / self.args.local_epochs
+                w_grad_epochs = w_grad_epochs / self.args.local_epochs
+                for d in range(latent_dim):
+                    self.O[d] = torch.mean(w_grad_epochs[:, d] / b_grad_epochs)
+                count = 0
+                count_computed += 1
+
+                n = estimated_entropy_from_grad(new_shift, b_grad_epochs.detach().cpu().tolist(),
+                                                self.args.batch_size * self.args.local_epochs)
+                new_shift_softmax = estimate_static_RLU_with_posterior(n, self.mu, new_mu, self.O)
+                n = estimated_entropy_from_grad(new_shift_softmax,b_grad_epochs.detach().cpu().tolist(), self.args.batch_size*self.args.local_epochs)
+                class_existences = [1 if n[i] > 0 else 0 for i in range(len(n))]
+                existences = [1 if num_instances[i] > 0 else 0 for i in range(len(num_instances))]
+
+                cAcc = accuracy_score(existences, class_existences)
+                acc = accuracy_score(num_instances, n)
+                res = np.where(n < num_instances, n, num_instances)
+                labels = range(args.n_classes)
+                irec = sum(
+                    [n[i] if n[i] <= num_instances[i] else num_instances[i] for i in labels]) / (
+                                   args.batch_size * args.local_epochs)
+                print(num_instances)
+                print(n)
+                print('acc:', acc)
+                print('irec:', irec)
+                average_acc += acc
+                average_irec += irec
+                average_cAcc += cAcc
+
+                b_grad_epochs = torch.zeros([args.n_classes])
+                targets_epochs = []
+                self.load_model(global_weights)
+
+        average_acc = average_acc / count_computed
+        average_irec = average_irec / count_computed
+        average_cAcc = average_cAcc / count_computed
 
         print('average acc:', average_acc)
         print('average irec:', average_irec)

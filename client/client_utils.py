@@ -6,6 +6,62 @@ import torch.nn as nn
 import torch
 from llg import get_label_stats,get_emb,post_process_emb,get_irlg_res
 
+
+def estimate_static_RLU_with_posterior(args, N, mu, new_mu, O):
+    max_diff = 100
+    count = 0
+    unit = args.local_epochs
+    last_epoch = args.local_epochs - 1
+    while max_diff >= 0.1 and count < 20:
+        count += 1
+        n = [round(i / args.local_epochs) for i in N]
+
+        new_shift = []
+        new_shift_softmax = []
+        new_shift_softmax.append(scipy.special.softmax(mu))
+        new_shift.append(mu)
+
+        for t in range(args.local_epochs - 1):
+            gb = np.zeros(args.n_classes)
+            for i in range(args.n_classes):
+                gb[i] = -n[i] / args.batch_size + scipy.special.softmax(new_shift[-1])[i]
+            latent_dim = len(O)
+            Delta = np.zeros(args.n_classes)
+            for i in range(args.n_classes):
+                sum_delta = 0
+                for d in range(latent_dim):
+                    sum_delta += -args.lr * gb[i] * O[d] * O[d]
+                Delta[i] = sum_delta
+            new_shift.append(new_shift[-1] + Delta)
+            new_shift_softmax.append(scipy.special.softmax(new_shift[-1]))
+        Diff = new_shift[last_epoch] - new_mu[last_epoch]
+
+        larger = np.where(new_shift[last_epoch] - new_mu[last_epoch] >= 0)[0]
+        abs_larger = abs(Diff[larger])
+        smaller = np.where(new_shift[last_epoch] - new_mu[last_epoch] < 0)[0]
+        abs_smaller = abs(Diff[smaller])
+
+        if len(larger.tolist()) == 0 or len(smaller.tolist()) == 0:
+            break
+
+        max_diff = max(np.max(abs_larger), np.max(abs_smaller))
+
+        idx_max_larger = np.argmax(abs_larger)
+        idx_max_larger_N = larger[idx_max_larger]
+
+        while N[idx_max_larger_N] < unit:
+            abs_larger[idx_max_larger] = 0
+            idx_max_larger = np.argmax(abs_larger)
+            idx_max_larger_N = larger[idx_max_larger]
+
+        N[idx_max_larger_N] = N[idx_max_larger_N] - unit
+
+        idx_max_smaller = np.argmax(abs_smaller)
+        idx_max_smaller_N = smaller[idx_max_smaller]
+        N[idx_max_smaller_N] = N[idx_max_smaller_N] + unit
+
+    return np.mean(new_shift_softmax, axis=0)
+
 def estimate_static_RLU(args, model, aux_dataset):
 
     model.train()
