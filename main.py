@@ -84,7 +84,8 @@ iAcc = []
 for idx in range(args.n_clients):
     print('client: ', idx)
     Clients[idx].load_model(global_weights)
-    acc1, acc2 = Clients[idx].iRLG(copy.deepcopy(global_weights))
+    if args.scheme == 'iRLG':
+        acc1, acc2 = Clients[idx].iRLG()
     cAcc.append(acc1)
     iAcc.append(acc2)
 average_cAcc = np.mean(np.array(cAcc))
