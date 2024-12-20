@@ -100,8 +100,6 @@ def matrix(args, predictions, ground_truths):
 
 
 def matrix_mean_var(args, predictions, ground_truths):
-    means = []
-    covs = []
     mis_predictions_maxrix = np.zeros((args.n_classes, args.n_classes))
     for i in range(args.n_classes):
         stat = learn_stat_vector(i, predictions, ground_truths)
