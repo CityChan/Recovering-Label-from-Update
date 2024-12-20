@@ -105,7 +105,7 @@ def estimated_entropy_from_grad(args, shift, bias, B):
 
     n = [0] * args.n_classes
     for i in range(args.n_classes):
-        bias[i] = bias[i] + shift[i]
+        bias[i] = bias[i] + 0.1
 
     for i in range(args.n_classes):
         if bias[i] < 0:
