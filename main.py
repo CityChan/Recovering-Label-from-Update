@@ -77,7 +77,7 @@ global_weights = global_model.state_dict()
 print("==> creating models")
 Clients = []
 for idx in range(args.n_clients):
-    Clients.append(Client(args, Loaders_train[idx], Loaders_test[idx], idx, model_name = args.model, device = device))
+    Clients.append(Client(args, Loaders_train[idx], idx, device, model_name = args.model))
 
 cAcc = []
 iAcc = []
