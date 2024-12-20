@@ -131,7 +131,7 @@ class Client(object):
         b_grad_epochs = torch.zeros([self.args.n_classes])
         w_grad_epochs = torch.zeros([self.args.n_classes, latent_dim])
         targets_epochs = []
-        self.mu, _ = estimate_static_RLU(copy.deepcopy(self.model))
+        self.mu, _ = estimate_static_RLU(self.args, copy.deepcopy(self.model), self.aux_dataset)
         self.O = torch.zeros(4096)
 
         for batch_idx, (inputs, targets) in enumerate(self.trainloader):
@@ -177,7 +177,7 @@ class Client(object):
 
                 n = estimated_entropy_from_grad(self.args, new_shift, b_grad_epochs.detach().cpu().tolist(),
                                                 self.args.batch_size * self.args.local_epochs)
-                new_shift_softmax = estimate_static_RLU_with_posterior(n, self.mu, new_mu, self.O)
+                new_shift_softmax = estimate_static_RLU_with_posterior(self.args, n, self.mu, new_mu, self.O)
                 n = estimated_entropy_from_grad(self.args, new_shift_softmax,b_grad_epochs.detach().cpu().tolist(), self.args.batch_size*self.args.local_epochs)
                 class_existences = [1 if n[i] > 0 else 0 for i in range(len(n))]
                 existences = [1 if num_instances[i] > 0 else 0 for i in range(len(num_instances))]
