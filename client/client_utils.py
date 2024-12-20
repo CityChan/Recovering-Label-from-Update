@@ -7,12 +7,6 @@ import torch
 from llg import get_label_stats,get_emb,post_process_emb,get_irlg_res
 
 def estimate_static_RLU(args, model, aux_dataset):
-    label_dict = {}
-    y_aux = np.array(test_dataset.targets)
-    K = args.n_classes
-    for k in range(K):
-        idx_k = np.where(y_aux == k)[0]
-        label_dict[k] = list(idx_k)
 
     model.train()
     criterion = nn.CrossEntropyLoss()
