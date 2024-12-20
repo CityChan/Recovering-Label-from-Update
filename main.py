@@ -15,3 +15,7 @@ from utils import average_weights,global_acc,AverageMeter
 from llg import get_label_stats,get_emb,post_process_emb,get_irlg_res
 args = args_parser()
 print(args)
+
+# Generating data partitions based on Dirichlet distribution
+Loaders_train,Loaders_test = get_dataloaders_Dirichlet(n_clients = args.n_clients, alpha=args.alpha, rand_seed = 0,
+                                                       dataset = args.dataset, batch_size = args.batch_size)
