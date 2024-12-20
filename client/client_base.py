@@ -7,13 +7,16 @@ from models import get_model
 from utils import average_weights,global_acc,AverageMeter
 from llg import get_label_stats,get_emb,post_process_emb,get_irlg_res
 import torch
+from client_utils import estimate_static_RLU, estimated_entropy_from_grad, learn_stat_vector, learn_stat, matrix,matrix_mean_var
+import numpy as np
 
 class Client(object):
-    def __init__(self, args, Loader_train, idx, device, model_name='resnet18'):
+    def __init__(self, args, Loader_train, idx, device, model_name='resnet18',aux_dataset):
         self.args = args
         self.trainloader = Loader_train
         self.idx = idx
         self.device = device
+        self.aux_dataset = aux_dataset
         channel = 3
         self.model = get_model(model_name=model_name,
                                net_params=(args.n_classes, channel, self.args.hidden),
@@ -112,56 +115,56 @@ class Client(object):
         print('average irec:', average_irec)
         return average_Leacc, average_irec
 
-    # def RLU(self):
-    #     self.model.train()
-    #
-    #     average_acc = 0
-    #     average_irec = 0
-    #     average_cAcc = 0
-    #
-    #     predictions_softmax = estimate_static_RLU(self.model)
-    #
-    #     for batch_idx, (inputs, targets) in enumerate(self.trainloader):
-    #         # measure data loading time
-    #         labels, existences, num_instances, num_instances_nonzero = get_label_stats(targets, args.n_classes)
-    #
-    #         inputs, targets = inputs.cuda(), targets.cuda(non_blocking=True)
-    #         inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
-    #
-    #         # compute output
-    #         outputs, _ = self.model(inputs)
-    #         loss = self.criterion(outputs, targets)
-    #
-    #         grads = torch.autograd.grad(loss, self.model.fc.parameters())
-    #         grads = list((_.detach().cpu().clone() for _ in grads))
-    #         probs = torch.softmax(outputs, dim=-1)
-    #         preds = torch.max(probs, 1)[1].cpu()
-    #
-    #         w_grad, b_grad = grads[-2], grads[-1]
-    #         n = estimated_entropy_from_grad(predictions_softmax, b_grad.detach().cpu().tolist())
-    #         class_existences = [1 if n[i] > 0 else 0 for i in range(len(n))]
-    #
-    #         cAcc = accuracy_score(existences, class_existences)
-    #         acc = accuracy_score(num_instances, n)
-    #         res = np.where(n < num_instances, n, num_instances)
-    #         irec = sum(
-    #             [n[i] if n[i] <= num_instances[i] else num_instances[i] for i in labels]) / args.batch_size
-    #         print(num_instances)
-    #         print(n)
-    #         print('acc:', acc)
-    #         print('irec:', irec)
-    #         average_acc += acc
-    #         average_irec += irec
-    #         average_cAcc += cAcc
-    #
-    #     average_acc = average_acc / len(self.trainloader)
-    #     average_irec = average_irec / len(self.trainloader)
-    #     average_cAcc = average_cAcc / len(self.trainloader)
-    #
-    #     print('average acc:', average_acc)
-    #     print('average irec:', average_irec)
-    #     return average_cAcc, average_irec
-    #
+    def RLU(self):
+        self.model.train()
+
+        average_acc = 0
+        average_irec = 0
+        average_cAcc = 0
+
+        predictions_softmax = estimate_static_RLU(self.args, self.model,self.aux_dataset)
+
+        for batch_idx, (inputs, targets) in enumerate(self.trainloader):
+            # measure data loading time
+            labels, existences, num_instances, num_instances_nonzero = get_label_stats(targets, self.args.n_classes)
+
+            inputs, targets = inputs.cuda(), targets.cuda(non_blocking=True)
+            inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
+
+            # compute output
+            outputs, _ = self.model(inputs)
+            loss = self.criterion(outputs, targets)
+
+            grads = torch.autograd.grad(loss, self.model.fc.parameters())
+            grads = list((_.detach().cpu().clone() for _ in grads))
+            probs = torch.softmax(outputs, dim=-1)
+            preds = torch.max(probs, 1)[1].cpu()
+
+            w_grad, b_grad = grads[-2], grads[-1]
+            n = estimated_entropy_from_grad(self.args, predictions_softmax, b_grad.detach().cpu().tolist())
+            class_existences = [1 if n[i] > 0 else 0 for i in range(len(n))]
+
+            cAcc = accuracy_score(existences, class_existences)
+            acc = accuracy_score(num_instances, n)
+            res = np.where(n < num_instances, n, num_instances)
+            irec = sum(
+                [n[i] if n[i] <= num_instances[i] else num_instances[i] for i in labels]) / self.args.batch_size
+            print(num_instances)
+            print(n)
+            print('acc:', acc)
+            print('irec:', irec)
+            average_acc += acc
+            average_irec += irec
+            average_cAcc += cAcc
+
+        average_acc = average_acc / len(self.trainloader)
+        average_irec = average_irec / len(self.trainloader)
+        average_cAcc = average_cAcc / len(self.trainloader)
+
+        print('average acc:', average_acc)
+        print('average irec:', average_irec)
+        return average_cAcc, average_irec
+
     # def LLG(self):
     #     self.model.train()
     #

@@ -52,14 +52,16 @@ if args.dataset == 'Tiny':
     test_dataset = ImageFolder(root=test_data_path, transform=apply_transform)
     total_train_dataset = ImageFolder(root=train_data_path, transform=apply_transform)
 
-validate_num = len(test_dataset)
-args.prop = 0.1
-whole_range = range(validate_num)
-aux_num = int(args.prop*validate_num)
-aux_dict = np.random.choice(whole_range, aux_num)
+prop = args.prop
+label_dict = {}
+aux_dict = []
+for k in range(K):
+    dict_k = label_dict[k]
+    aux_num = int(prop * len(dict_k))
+    aux_dict.append(np.random.choice(dict_k, aux_num))
+
+aux_dict = np.concatenate(aux_dict)
 aux_dataset = LocalDataset(test_dataset, aux_dict)
-loader_test = torch.utils.data.DataLoader(aux_dataset, batch_size=args.batch_size,shuffle=True)
-total_loader_train = torch.utils.data.DataLoader(total_train_dataset, batch_size=args.batch_size,shuffle=True)
 
 # create global model
 channel = 3
@@ -77,7 +79,7 @@ global_weights = global_model.state_dict()
 print("==> creating models")
 Clients = []
 for idx in range(args.n_clients):
-    Clients.append(Client(args, Loaders_train[idx], idx, device, model_name = args.model))
+    Clients.append(Client(args, Loaders_train[idx], idx, device, model_name = args.model, aux_dataset))
 
 cAcc = []
 iAcc = []
@@ -86,6 +88,8 @@ for idx in range(args.n_clients):
     Clients[idx].load_model(global_weights)
     if args.scheme == 'iRLG':
         acc1, acc2 = Clients[idx].iRLG()
+    if args.scheme == 'RLU':
+        acc1, acc2 = Clients[idx].RLU()
     cAcc.append(acc1)
     iAcc.append(acc2)
 average_cAcc = np.mean(np.array(cAcc))
