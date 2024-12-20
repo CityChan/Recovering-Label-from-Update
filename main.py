@@ -54,8 +54,14 @@ if args.dataset == 'Tiny':
     total_train_dataset = ImageFolder(root=train_data_path, transform=apply_transform)
 
 random.seed(42)
-prop = args.prop
 label_dict = {}
+y_aux = np.array(test_dataset.targets)
+K = args.n_classes
+for k in range(K):
+    idx_k = np.where(y_aux == k)[0]
+    label_dict[k] = list(idx_k)
+
+prop = args.prop
 aux_dict = []
 for k in range(K):
     dict_k = label_dict[k]
