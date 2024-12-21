@@ -40,7 +40,7 @@ def args_parser():
                         help='RLU, iRLG, LLGp, ZLGp')
 
     parser.add_argument('--fl_scheme', default='fedavg', type=str,
-                        help='fedavg, fedprox, feddyn, scaffold')
+                        help='fedavg, fedprox, feddyn, scaffold, sgdm')
 
     parser.add_argument('--gamma', type=float, default=0.1, help='LR is multiplied by gamma on schedule.')
 

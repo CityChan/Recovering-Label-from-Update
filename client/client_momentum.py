@@ -14,7 +14,7 @@ import numpy as np
 import copy
 import scipy
 
-class Client(object):
+class Client_m(object):
     def __init__(self, args, Loader_train, idx, device, model_name, aux_dataset):
         self.args = args
         self.trainloader = Loader_train
