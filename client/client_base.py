@@ -263,7 +263,7 @@ class Client(object):
 
         for batch_idx, (inputs, targets) in enumerate(self.trainloader):
             # measure data loading time
-            labels, existences, num_instances, num_instances_nonzero = get_label_stats(targets, args.n_classes)
+            labels, existences, num_instances, num_instances_nonzero = get_label_stats(targets, self.args.n_classes)
 
             inputs, targets = inputs.cuda(), targets.cuda(non_blocking=True)
             inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
