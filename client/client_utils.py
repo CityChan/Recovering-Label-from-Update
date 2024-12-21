@@ -222,3 +222,50 @@ def estimate_static_LLG(args, model,aux_data):
     return impact, offset
 
 
+def estimate_static_ZLG(args, model, aux_data):
+    O_bar = 0
+    pj = torch.zeros(args.n_classes).cuda()
+    label_dict = {}
+
+    y_aux = np.array(aux_data.dataset.targets)
+    K = args.n_classes
+    for k in range(K):
+        idx_k = np.where(y_aux == k)[0]
+        label_dict[k] = list(idx_k)
+
+    model.train()
+    criterion = nn.CrossEntropyLoss()
+    K = args.n_classes
+    prop = args.prop
+
+    for k in range(K):
+        dict_k = label_dict[k]
+        aux_num = int(prop * len(dict_k))
+        aux_dict = np.random.choice(dict_k, aux_num)
+        aux_dataset = LocalDataset(aux_data.dataset, aux_dict)
+        aux_loader = torch.utils.data.DataLoader(aux_dataset, batch_size=args.batch_size, shuffle=True)
+
+        count = 0
+        for batch_idx, (inputs, targets) in enumerate(aux_loader):
+            inputs, targets = inputs.cuda(), targets.cuda(non_blocking=True)
+            inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
+            # compute output
+            outputs, embedding = model(inputs)
+            loss = criterion(outputs, targets)
+
+            probs = torch.softmax(outputs, dim=-1)
+
+            mean_probs = torch.mean(probs, dim=0)
+            embedding_sum = torch.sum(embedding, dim=1)
+
+            mean_embedding = torch.mean(embedding_sum, dim=0)
+
+            O_bar += mean_embedding
+            pj[k] += mean_probs[k]
+            count += 1
+
+    O_bar = O_bar / (args.n_classes * count)
+    pj = pj / (count)
+    return O_bar, pj
+
+

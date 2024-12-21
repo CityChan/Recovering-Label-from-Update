@@ -8,7 +8,7 @@ from utils import average_weights,global_acc,AverageMeter
 from llg import get_label_stats,get_emb,post_process_emb,get_irlg_res
 import torch
 from client.client_utils import estimate_static_RLU, estimated_entropy_from_grad, estimate_static_RLU_with_posterior
-from client.client_utils import estimate_static_LLG
+from client.client_utils import estimate_static_LLG,estimate_static_ZLG
 
 import numpy as np
 import copy
@@ -351,96 +351,95 @@ class Client(object):
         print('average irec:', average_irec)
         return average_cAcc, average_irec
 
-    # def ZLG(self, global_weights):
-    #     self.model.train()
-    #
-    #     average_acc = 0
-    #     average_irec = 0
-    #     average_cAcc = 0
-    #
-    #     count_computed = 0
-    #
-    #     count = 0
-    #     latent_dim = 4096
-    #
-    #     w_grad_epochs = torch.zeros([args.n_classes, latent_dim])
-    #     targets_epochs = []
-    #
-    #     O_bar, pj = estimate_static_ZLG(copy.deepcopy(self.model))
-    #
-    #     for batch_idx, (inputs, targets) in enumerate(self.trainloader):
-    #         # measure data loading time
-    #         labels, existences, num_instances, num_instances_nonzero = get_label_stats(targets, args.n_classes)
-    #
-    #         inputs, targets = inputs.cuda(), targets.cuda(non_blocking=True)
-    #         targets_epochs.append(targets)
-    #         # compute output
-    #         self.optimizer.zero_grad()
-    #         outputs, _ = self.model(inputs)
-    #         loss = self.criterion(outputs, targets)
-    #         loss.backward()
-    #
-    #         self.optimizer.step()
-    #
-    #         grads = []
-    #         for param in self.model.fc.parameters():
-    #             grads.append(param.grad.detach().cpu().clone())
-    #
-    #         w_grad, b_grad = grads[-2], grads[-1]
-    #         w_grad_epochs += w_grad
-    #         count += 1
-    #
-    #         if count == args.local_epochs:
-    #             new_O_bar, new_pj = estimate_static_ZLG(copy.deepcopy(self.model))
-    #             new_O_bar = (new_O_bar + O_bar) / 2
-    #             new_pj = (new_pj + pj) / 2
-    #             targets_epochs = torch.cat(targets_epochs, dim=0)
-    #             targets_epochs = targets_epochs.tolist()
-    #             num_instances = np.zeros(args.n_classes)
-    #             for k in range(args.n_classes):
-    #                 num_instances[k] = targets_epochs.count(k)
-    #
-    #             w_grad_epochs = w_grad_epochs / args.local_epochs
-    #
-    #             count = 0
-    #             count_computed += 1
-    #
-    #             gradients_for_prediction = torch.sum(w_grad_epochs, dim=-1)
-    #             n = []
-    #             for i in range(args.n_classes):
-    #                 nj = args.batch_size * args.local_epochs * (
-    #                             new_pj[i].detach().cpu() - gradients_for_prediction[i] / new_O_bar.detach().cpu())
-    #                 n.append(max(int(nj.item()), 0))
-    #
-    #             prop = (args.local_epochs * args.batch_size) / sum(n)
-    #             for i in range(args.n_classes):
-    #                 n[i] = round(n[i] * prop)
-    #
-    #             class_existences = [1 if n[i] > 0 else 0 for i in range(len(n))]
-    #             cAcc = accuracy_score(existences, class_existences)
-    #             acc = accuracy_score(num_instances, n)
-    #             res = np.where(n < num_instances, n, num_instances)
-    #             labels = range(args.n_classes)
-    #             irec = sum([n[i] if n[i] <= num_instances[i] else num_instances[i] for i in labels]) / (
-    #                         args.batch_size * args.local_epochs)
-    #             print(num_instances)
-    #             print(n)
-    #             print('acc:', acc)
-    #             print('irec:', irec)
-    #             average_acc += acc
-    #             average_irec += irec
-    #             average_cAcc += cAcc
-    #             w_grad_epochs = torch.zeros([args.n_classes, latent_dim])
-    #             targets_epochs = []
-    #             self.load_model(global_weights)
-    #
-    #     average_acc = average_acc / count_computed
-    #     average_irec = average_irec / count_computed
-    #     average_cAcc = average_cAcc / count_computed
-    #
-    #     print('average acc:', average_acc)
-    #     print('average irec:', average_irec)
-    #     return average_cAcc, average_irec
+    def ZLG(self, global_weights):
+        self.model.train()
+
+        average_acc = 0
+        average_irec = 0
+        average_cAcc = 0
+
+        count_computed = 0
+
+        count = 0
+
+        w_grad_epochs = torch.zeros([self.args.n_classes, self.latent_dim])
+        targets_epochs = []
+
+        O_bar, pj = estimate_static_ZLG(copy.deepcopy(self.model))
+
+        for batch_idx, (inputs, targets) in enumerate(self.trainloader):
+            # measure data loading time
+            labels, existences, num_instances, num_instances_nonzero = get_label_stats(targets, args.n_classes)
+
+            inputs, targets = inputs.cuda(), targets.cuda(non_blocking=True)
+            targets_epochs.append(targets)
+            # compute output
+            self.optimizer.zero_grad()
+            outputs, _ = self.model(inputs)
+            loss = self.criterion(outputs, targets)
+            loss.backward()
+
+            self.optimizer.step()
+
+            grads = []
+            for param in self.model.fc.parameters():
+                grads.append(param.grad.detach().cpu().clone())
+
+            w_grad, b_grad = grads[-2], grads[-1]
+            w_grad_epochs += w_grad
+            count += 1
+
+            if count == self.args.local_epochs:
+                new_O_bar, new_pj = estimate_static_ZLG(copy.deepcopy(self.model))
+                new_O_bar = (new_O_bar + O_bar) / 2
+                new_pj = (new_pj + pj) / 2
+                targets_epochs = torch.cat(targets_epochs, dim=0)
+                targets_epochs = targets_epochs.tolist()
+                num_instances = np.zeros(self.args.n_classes)
+                for k in range(self.args.n_classes):
+                    num_instances[k] = targets_epochs.count(k)
+
+                w_grad_epochs = w_grad_epochs / self.args.local_epochs
+
+                count = 0
+                count_computed += 1
+
+                gradients_for_prediction = torch.sum(w_grad_epochs, dim=-1)
+                n = []
+                for i in range(self.args.n_classes):
+                    nj = self.args.batch_size * self.args.local_epochs * (
+                                new_pj[i].detach().cpu() - gradients_for_prediction[i] / new_O_bar.detach().cpu())
+                    n.append(max(int(nj.item()), 0))
+
+                prop = (self.args.local_epochs * self.args.batch_size) / sum(n)
+                for i in range(self.args.n_classes):
+                    n[i] = round(n[i] * prop)
+
+                class_existences = [1 if n[i] > 0 else 0 for i in range(len(n))]
+                cAcc = accuracy_score(existences, class_existences)
+                acc = accuracy_score(num_instances, n)
+                res = np.where(n < num_instances, n, num_instances)
+                labels = range(self.args.n_classes)
+                irec = sum([n[i] if n[i] <= num_instances[i] else num_instances[i] for i in labels]) / (
+                            self.args.batch_size * self.args.local_epochs)
+                print(num_instances)
+                print(n)
+                print('acc:', acc)
+                print('irec:', irec)
+                average_acc += acc
+                average_irec += irec
+                average_cAcc += cAcc
+                w_grad_epochs = torch.zeros([self.args.n_classes, self.latent_dim])
+                targets_epochs = []
+                self.load_model(global_weights)
+
+        average_acc = average_acc / count_computed
+        average_irec = average_irec / count_computed
+        average_cAcc = average_cAcc / count_computed
+
+        print('average acc:', average_acc)
+        print('average irec:', average_irec)
+        return average_cAcc, average_irec
 
     def local_training(self, global_epoch):
         for epoch in range(self.args.local_epochs):
