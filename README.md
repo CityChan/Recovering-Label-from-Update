@@ -17,7 +17,7 @@ pip3 install torch torchvision torchaudio --index-url https://download.pytorch.o
 After unzipping, place them in `data/` directory
 
 ## Project Structure
-* **configs**: this directory contains configuartions of training for all schemes. All parameteres are stored in `.json` file.
+* `option.py`: this directory contains configuartions of training for all schemes. All parameteres are stored in `.json` file.
 * **data**: put all datasets in this directory.
 * **dataloaders**: only for spliting test set of **DomainNet**.
 * **logs**: storing the training and test results.
