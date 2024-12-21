@@ -82,10 +82,12 @@ python main.py --scheme ZLGp --local_epoch 10 --dataset CIFAR100 --n_classes 100
 #### Citeation
 Please cite our paper, if you happen to use this code:
 ```
-@article{chen2024recovering,
-  title={Recovering Labels from Local Updates in Federated Learning},
-  author={Chen, Huancheng and Vikalo, Haris},
-  journal={arXiv preprint arXiv:2405.00955},
-  year={2024}
+@inproceedings{
+chen2024recovering,
+title={Recovering Labels from Local Updates in Federated Learning},
+author={Huancheng Chen and Haris Vikalo},
+booktitle={Forty-first International Conference on Machine Learning},
+year={2024},
+url={https://openreview.net/forum?id=E41gvBG4s6}
 }
 ```
