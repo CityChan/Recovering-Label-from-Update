@@ -351,7 +351,7 @@ class Client(object):
         print('average irec:', average_irec)
         return average_cAcc, average_irec
 
-    def ZLG(self, global_weights):
+    def ZLGp(self, global_weights):
         self.model.train()
 
         average_acc = 0
