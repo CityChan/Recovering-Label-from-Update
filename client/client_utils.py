@@ -12,7 +12,7 @@ def estimate_static_RLU_with_posterior(args, N, mu, new_mu, O):
     count = 0
     unit = args.local_epochs
     last_epoch = args.local_epochs - 1
-    while max_diff >= 0.1 and count < 5:
+    while max_diff >= 0.2 and count < 10:
         count += 1
         n = [round(i / args.local_epochs) for i in N]
 
@@ -50,7 +50,7 @@ def estimate_static_RLU_with_posterior(args, N, mu, new_mu, O):
         idx_max_larger_N = larger[idx_max_larger]
 
         cnt = 0
-        while N[idx_max_larger_N] < unit and cnt < 10:
+        while N[idx_max_larger_N] < unit and cnt < 20:
             abs_larger[idx_max_larger] = 0
             idx_max_larger = np.argmax(abs_larger)
             idx_max_larger_N = larger[idx_max_larger]
