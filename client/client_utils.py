@@ -183,12 +183,12 @@ def estimate_static_LLG(args, model,aux_data):
     criterion = nn.CrossEntropyLoss()
     K = args.n_classes
     g_bar = 0
-
+    prop = args.prop
     for k in range(K):
         dict_k = label_dict[k]
-        aux_num =  len(dict_k)
+        aux_num = int(prop*len(dict_k))
         aux_dict = np.random.choice(dict_k, aux_num)
-        aux_dataset = LocalDataset(aux_data, aux_dict)
+        aux_dataset = LocalDataset(aux_data.dataset, aux_dict)
         aux_loader = torch.utils.data.DataLoader(aux_dataset, batch_size=args.batch_size, shuffle=True)
 
         g_k = 0
