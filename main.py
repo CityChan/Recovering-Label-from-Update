@@ -8,6 +8,7 @@ import torchvision.datasets as datasets
 from torchvision.datasets import ImageFolder
 from models import get_model
 from client.client_base import Client
+from client.client_prox import Client_prox
 import random
 from utils import accuracy,average_weights,sum_list,global_acc
 
@@ -95,7 +96,10 @@ global_weights = global_model.state_dict()
 print("==> creating models")
 Clients = []
 for idx in range(args.n_clients):
+    if args.fl_scheme == 'fedavg':
         Clients.append(Client(args, Loaders_train[idx], idx, device, args.model, aux_dataset))
+    if args.fl_scheme == 'fedprox':
+        Clients.append(Client_prox(args, Loaders_train[idx], idx, device, args.model, aux_dataset))
 
 # Attacking after training the global model
 # args.epochs = 0
