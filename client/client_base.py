@@ -42,6 +42,8 @@ class Client(object):
             self.latent_dim = 512
         if args.model == 'vgg16':
             self.latent_dim = 4096
+        if args.model == 'lenet5':
+            self.latent_dim = 84
 
     def train(self, epoch):
         self.model.train()
