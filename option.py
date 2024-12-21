@@ -42,6 +42,9 @@ def args_parser():
     parser.add_argument('--fl_scheme', default='fedavg', type=str,
                         help='fedavg, fedprox, feddyn, scaffold')
 
+    parser.add_argument('--mu', default=0.0, type=str,
+                        help='hyper-parameter for fedprox, feddyn, scaffold')
+
     parser.add_argument('--gamma', type=float, default=0.1, help='LR is multiplied by gamma on schedule.')
 
     parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
