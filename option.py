@@ -18,6 +18,8 @@ def args_parser():
 
     parser.add_argument('-m', '--model', default='resnet18', type=str, help='vgg, resnet18, resnet54, lenet')
 
+    parser.add_argument('-m', '--activation', default='relu', type=str, help='relu, tanh, elu, selu, silu')
+
     parser.add_argument('--hidden', default=512, type=int, help='dimension of the hidden embeddings')
 
     parser.add_argument('-n', '--n_clients', default=10, type=int)

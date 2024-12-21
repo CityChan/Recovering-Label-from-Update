@@ -22,6 +22,9 @@ class Client(object):
         self.device = device
         self.aux_dataset = aux_dataset
         channel = 3
+        tanh = False
+        if args.activation == 'tanh':
+            tanh = True
         self.model = get_model(model_name=model_name,
                                net_params=(args.n_classes, channel, self.args.hidden),
                                device=device,
@@ -29,7 +32,7 @@ class Client(object):
                                n_dim=300,
                                batchnorm=False,
                                dropout=True,
-                               tanh=False,
+                               tanh=tanh,
                                leaky_relu=False).cuda()
 
         self.criterion = nn.CrossEntropyLoss()
@@ -149,7 +152,6 @@ class Client(object):
         average_Leacc = average_Leacc / count_computed
         average_acc = average_acc / count_computed
         average_irec = average_irec / count_computed
-        print('average acc:', average_acc)
         print('average irec:', average_irec)
         return average_Leacc, average_irec
 
@@ -212,8 +214,8 @@ class Client(object):
 
                 n = estimated_entropy_from_grad(self.args, new_shift, b_grad_epochs.detach().cpu().tolist(),
                                                 self.args.batch_size * self.args.local_epochs)
-                # new_shift_softmax = estimate_static_RLU_with_posterior(self.args, n, self.mu, new_mu, self.O)
-                # n = estimated_entropy_from_grad(self.args, new_shift_softmax,b_grad_epochs.detach().cpu().tolist(), self.args.batch_size*self.args.local_epochs)
+                new_shift_softmax = estimate_static_RLU_with_posterior(self.args, n, self.mu, new_mu, self.O)
+                n = estimated_entropy_from_grad(self.args, new_shift_softmax,b_grad_epochs.detach().cpu().tolist(), self.args.batch_size*self.args.local_epochs)
                 class_existences = [1 if n[i] > 0 else 0 for i in range(len(n))]
                 existences = [1 if num_instances[i] > 0 else 0 for i in range(len(num_instances))]
 
@@ -226,7 +228,6 @@ class Client(object):
                                    self.args.batch_size * self.args.local_epochs)
                 print(num_instances)
                 print(n)
-                print('acc:', acc)
                 print('irec:', irec)
                 average_acc += acc
                 average_irec += irec
@@ -240,7 +241,6 @@ class Client(object):
         average_irec = average_irec / count_computed
         average_cAcc = average_cAcc / count_computed
 
-        print('average acc:', average_acc)
         print('average irec:', average_irec)
         return average_cAcc, average_irec
 
@@ -333,7 +333,6 @@ class Client(object):
                             self.args.batch_size * self.args.local_epochs)
                 print(num_instances)
                 print(n)
-                print('acc:', acc)
                 print('irec:', irec)
                 average_acc += acc
                 average_irec += irec
@@ -347,7 +346,6 @@ class Client(object):
         average_irec = average_irec / count_computed
         average_cAcc = average_cAcc / count_computed
 
-        print('average acc:', average_acc)
         print('average irec:', average_irec)
         return average_cAcc, average_irec
 
@@ -424,7 +422,6 @@ class Client(object):
                             self.args.batch_size * self.args.local_epochs)
                 print(num_instances)
                 print(n)
-                print('acc:', acc)
                 print('irec:', irec)
                 average_acc += acc
                 average_irec += irec
@@ -437,7 +434,6 @@ class Client(object):
         average_irec = average_irec / count_computed
         average_cAcc = average_cAcc / count_computed
 
-        print('average acc:', average_acc)
         print('average irec:', average_irec)
         return average_cAcc, average_irec
 

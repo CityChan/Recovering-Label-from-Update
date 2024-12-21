@@ -75,6 +75,9 @@ total_loader_train = torch.utils.data.DataLoader(total_train_dataset, batch_size
 
 # create global model
 channel = 3
+tanh = False
+if args.activation == 'tanh':
+    tanh = True
 global_model = get_model(model_name=args.model,
                          net_params=(args.n_classes, channel, args.hidden),
                          device=device,
@@ -82,7 +85,7 @@ global_model = get_model(model_name=args.model,
                          n_dim=300,
                          batchnorm=False,
                          dropout=True,
-                         tanh=False,
+                         tanh=tanh,
                          leaky_relu=False).cuda()
 
 global_weights = global_model.state_dict()
