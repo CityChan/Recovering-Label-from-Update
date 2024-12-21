@@ -222,8 +222,8 @@ class Client(object):
 
                 n = estimated_entropy_from_grad(self.args, new_shift*rho_mean, b_grad_epochs.detach().cpu().tolist(),
                                                 self.args.batch_size * self.args.local_epochs)
-                new_shift_softmax = estimate_static_RLU_with_posterior(self.args, n, self.mu, new_mu, self.O)
-                n = estimated_entropy_from_grad(self.args, new_shift_softmax*rho_mean,b_grad_epochs.detach().cpu().tolist(), self.args.batch_size*self.args.local_epochs)
+                # new_shift_softmax = estimate_static_RLU_with_posterior(self.args, n, self.mu, new_mu, self.O)
+                # n = estimated_entropy_from_grad(self.args, new_shift_softmax*rho_mean,b_grad_epochs.detach().cpu().tolist(), self.args.batch_size*self.args.local_epochs)
                 class_existences = [1 if n[i] > 0 else 0 for i in range(len(n))]
                 existences = [1 if num_instances[i] > 0 else 0 for i in range(len(num_instances))]
 
