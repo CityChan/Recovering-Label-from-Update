@@ -172,8 +172,10 @@ def estimate_static_LLG(args, model,aux_data):
     impact = 0
     offset = torch.zeros(args.n_classes)
     label_dict = {}
-
-    y_aux = np.array(aux_data.dataset.targets)
+    if args.dataset == 'SVHN':
+        y_aux = np.array(aux_data.dataset.labels)
+    else:
+        y_aux = np.array(aux_data.dataset.targets)
     K = args.n_classes
     for k in range(K):
         idx_k = np.where(y_aux == k)[0]
@@ -227,7 +229,10 @@ def estimate_static_ZLG(args, model, aux_data):
     pj = torch.zeros(args.n_classes).cuda()
     label_dict = {}
 
-    y_aux = np.array(aux_data.dataset.targets)
+    if args.dataset == 'SVHN':
+        y_aux = np.array(aux_data.dataset.labels)
+    else:
+        y_aux = np.array(aux_data.dataset.targets)
     K = args.n_classes
     for k in range(K):
         idx_k = np.where(y_aux == k)[0]

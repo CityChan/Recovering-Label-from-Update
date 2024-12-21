@@ -56,7 +56,10 @@ if args.dataset == 'Tiny':
 
 random.seed(42)
 label_dict = {}
-y_aux = np.array(test_dataset.targets)
+if args.dataset == 'SVHN':
+    y_aux = np.array(test_dataset.labels)
+else:
+    y_aux = np.array(test_dataset.targets)
 K = args.n_classes
 for k in range(K):
     idx_k = np.where(y_aux == k)[0]
