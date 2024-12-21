@@ -24,7 +24,7 @@ python main.py --scheme LLGp --local_epoch 10 --dataset CIFAR10 --momentum 0.0 -
 # ZLGp
 python main.py --scheme ZLGp --local_epoch 10 --dataset CIFAR10 --momentum 0.0 --alpha 0.5 --batch_size 64 --model vgg16 --hidden 512
 
-# 2. multiple local epochs with activation function relu with momentum
+# 3. multiple local epochs with activation function relu with momentum
 # iRLG
 python main.py --scheme iRLG --local_epoch 10 --dataset CIFAR10 --momentum 0.9 --alpha 0.5 --batch_size 64 --model vgg16 --hidden 512 --lr 0.05
 
@@ -36,3 +36,16 @@ python main.py --scheme LLGp --local_epoch 10 --dataset CIFAR10 --momentum 0.9 -
 
 # ZLGp
 python main.py --scheme ZLGp --local_epoch 10 --dataset CIFAR10 --momentum 0.9 --alpha 0.5 --batch_size 64 --model vgg16 --hidden 512 --lr 0.05
+
+# 4. multiple local epochs with activation function relu with fedprox
+# iRLG
+python main.py --scheme iRLG --local_epoch 10 --dataset CIFAR10 --momentum 0.0 --fl_scheme fedprox --mu 0.5 --alpha 0.5 --batch_size 64 --model vgg16 --hidden 512
+
+# RLU
+python main.py --scheme RLU --local_epoch 10 --dataset CIFAR10 --momentum 0.0 --fl_scheme fedprox --mu 0.5 --alpha 0.5 --batch_size 64 --model vgg16 --hidden 512
+
+# LLGp
+python main.py --scheme LLGp --local_epoch 10 --dataset CIFAR10 --momentum 0.0 --fl_scheme fedprox --mu 0.5 --alpha 0.5 --batch_size 64 --model vgg16 --hidden 512
+
+# ZLGp
+python main.py --scheme ZLGp --local_epoch 10 --dataset CIFAR10 --momentum 0.0 --fl_scheme fedprox --mu 0.5 --alpha 0.5 --batch_size 64 --model vgg16 --hidden 512
