@@ -17,11 +17,11 @@ pip3 install torch torchvision torchaudio --index-url https://download.pytorch.o
 After unzipping, place them in `data/` directory
 
 ## Project Structure
-* `option.py`: this directory contains configuartions of training for all schemes. All parameteres are stored in `.json` file.
-* **data**: put all datasets in this directory.
-* **dataloaders**: only for spliting test set of **DomainNet**.
-* **logs**: storing the training and test results.
-* **methods**: this directory contains all methods we used in the experiments.
+* `option.py`: this file contains configuartions for all schemes. 
+* `DataSampling.py`: this file is relevant to data partions for federated learning
+* `models.py`: this file define models for different experiments. Please change the activation functions if needed.
+* `utils.py`: general utilization 
+* `llg.py`: this is adapted from the scheme [LLG](https://github.com/tklab-tud/LLG)
 * **models**: for each method, we defined adaptive model structure.
 * **utils**: this directory contain utilization functions needed in the traing including: creating continual learning data partitions, computing accuracy.
 
