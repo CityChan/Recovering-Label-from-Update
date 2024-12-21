@@ -247,9 +247,8 @@ class Client_prox(object):
                 count_computed += 1
 
                 rho = np.zeros(self.args.local_epochs)
-                gamma = self.args.gamma
                 for t in range(self.args.local_epochs):
-                    rho[t] = (1 - gamma ** (self.args.local_epochs - t)) / (1 - gamma)
+                    rho[t] = (1 - mu * self.args.lr) ** (self.args.local_epochs - 1 - t)
                 rho_mean = np.sum(rho) / self.args.local_epochs
 
                 n = estimated_entropy_from_grad(self.args, new_shift*rho_mean, b_grad_epochs.detach().cpu().tolist(),
