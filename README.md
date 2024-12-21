@@ -26,10 +26,15 @@ After unzipping, place them in `data/` directory
 * `./client/client_utils.py`: utilization for the attacking schemes
 
 
-## Run Training:
-#### For 10-split CIFAR100
+## Run Attacks:
+#### For SVHN with single local epoch
 ```
-python main.py --device "0" --config ./configs/cifar100_duallora.json 
+python main.py --scheme iRLG --local_epoch 1 --dataset SVHN --momentum 0.0 --alpha 0.5 --batch_size 32 --model lenet5 --hidden 400
+python main.py --scheme RLU --local_epoch 1 --dataset SVHN --momentum 0.0 --alpha 0.5 --batch_size 32 --model lenet5 --hidden 400
+python main.py --scheme LLGp --local_epoch 1 --dataset SVHN --momentum 0.0 --alpha 0.5 --batch_size 32 --model lenet5 --hidden 400
+python main.py --scheme ZLGp --local_epoch 1 --dataset SVHN --momentum 0.0 --alpha 0.5 --batch_size 32 --model lenet5 --hidden 400
+
+
 ```
 
 #### For 10-split Tiny-ImageNet
