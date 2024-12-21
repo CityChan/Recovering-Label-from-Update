@@ -166,3 +166,59 @@ def matrix_mean_var(args, predictions, ground_truths):
         mean_softmax = np.mean(softmax_samples, axis=0)
         mis_predictions_maxrix[:, i] = mean_softmax
     return mis_predictions_maxrix
+
+
+def estimate_static_LLG(args, model,aux_data):
+    impact = 0
+    offset = torch.zeros(args.n_classes)
+    label_dict = {}
+
+    y_aux = np.array(aux_data.targets)
+    K = args.n_classes
+    for k in range(K):
+        idx_k = np.where(y_aux == k)[0]
+        label_dict[k] = list(idx_k)
+
+    model.train()
+    criterion = nn.CrossEntropyLoss()
+    K = args.n_classes
+    g_bar = 0
+
+    for k in range(K):
+        dict_k = label_dict[k]
+        aux_num =  len(dict_k)
+        aux_dict = np.random.choice(dict_k, aux_num)
+        aux_dataset = LocalDataset(aux_data, aux_dict)
+        aux_loader = torch.utils.data.DataLoader(aux_dataset, batch_size=args.batch_size, shuffle=True)
+
+        g_k = 0
+        count = 0
+        for batch_idx, (inputs, targets) in enumerate(aux_loader):
+            inputs, targets = inputs.cuda(), targets.cuda(non_blocking=True)
+            inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
+            # compute output
+            outputs, _ = model(inputs)
+            loss = criterion(outputs, targets)
+
+            grads = torch.autograd.grad(loss, model.fc.parameters())
+            grads = list((_.detach().cpu().clone() for _ in grads))
+
+            w_grad, b_grad = grads[-2], grads[-1]
+
+            gradients_for_prediction = torch.sum(w_grad, dim=-1)
+            g_k += gradients_for_prediction[k]
+            for j in range(K):
+                if j == k:
+                    continue
+                else:
+                    offset[j] += gradients_for_prediction[j]
+            count += 1
+
+        g_k = g_k / count
+        g_bar += g_k
+
+    impact = g_bar * (1 + 1 / args.n_classes) / (args.n_classes * args.batch_size)
+    offset = offset / ((K - 1) * count)
+    return impact, offset
+
+

@@ -8,6 +8,8 @@ from utils import average_weights,global_acc,AverageMeter
 from llg import get_label_stats,get_emb,post_process_emb,get_irlg_res
 import torch
 from client.client_utils import estimate_static_RLU, estimated_entropy_from_grad, estimate_static_RLU_with_posterior
+from client.client_utils import estimate_static_LLG
+
 import numpy as np
 import copy
 import scipy
@@ -242,212 +244,200 @@ class Client(object):
         print('average irec:', average_irec)
         return average_cAcc, average_irec
 
-    # def LLG(self):
+    def LLGp(self, global_weights):
+        self.model.train()
+
+        average_acc = 0
+        average_irec = 0
+        average_cAcc = 0
+
+        count_computed = 0
+
+        count = 0
+        latent_dim = 4096
+
+        w_grad_epochs = torch.zeros([self.args.n_classes, latent_dim])
+        targets_epochs = []
+
+        impact, offset = estimate_static_LLG(copy.deepcopy(self.model))
+
+        for batch_idx, (inputs, targets) in enumerate(self.trainloader):
+            # measure data loading time
+            labels, existences, num_instances, num_instances_nonzero = get_label_stats(targets, args.n_classes)
+
+            inputs, targets = inputs.cuda(), targets.cuda(non_blocking=True)
+            inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
+            targets_epochs.append(targets)
+            # compute output
+            outputs, _ = self.model(inputs)
+            loss = self.criterion(outputs, targets)
+            self.optimizer.zero_grad()
+            loss.backward()
+
+            self.optimizer.step()
+
+            grads = []
+            for param in self.model.fc.parameters():
+                grads.append(param.grad.detach().cpu().clone())
+
+            w_grad, b_grad = grads[-2], grads[-1]
+            w_grad_epochs += w_grad
+            count += 1
+
+            if count == self.args.local_epochs:
+                new_impact, new_offset = estimate_static_LLG(self.args, copy.deepcopy(self.model), self.aux_dataset)
+                new_impact = (new_impact + impact) / 2
+                new_offset = (new_offset + offset) / 2
+                targets_epochs = torch.cat(targets_epochs, dim=0)
+                targets_epochs = targets_epochs.tolist()
+                num_instances = np.zeros(self.args.n_classes)
+                for k in range(self.args.n_classes):
+                    num_instances[k] = targets_epochs.count(k)
+                w_grad_epochs = w_grad_epochs / self.args.local_epochs
+                count = 0
+                count_computed += 1
+
+                h1_extraction = []
+
+                gradients_for_prediction = torch.sum(w_grad_epochs, dim=-1)
+
+                # filter negative values
+                for i_cg, class_gradient in enumerate(gradients_for_prediction):
+                    if class_gradient < 0:
+                        h1_extraction.append((i_cg, class_gradient))
+
+                gradients_for_prediction -= new_offset
+                prediction = []
+
+                for (i_c, _) in h1_extraction:
+                    prediction.append(i_c)
+                    gradients_for_prediction[i_c] = gradients_for_prediction[i_c].add(-impact)
+
+                for _ in range(self.args.batch_size - len(prediction)):
+                    # add minimal candidate, likely to be doubled, to prediction
+                    min_id = torch.argmin(gradients_for_prediction).item()
+                    prediction.append(min_id)
+
+                    # add the mean value of one occurrence to the candidate
+                    gradients_for_prediction[min_id] = gradients_for_prediction[min_id].add(-new_impact)
+
+                n = []
+                for i in range(self.args.n_classes):
+                    n.append(self.args.local_epochs * prediction.count(i))
+
+                class_existences = [1 if n[i] > 0 else 0 for i in range(len(n))]
+                cAcc = accuracy_score(existences, class_existences)
+                acc = accuracy_score(num_instances, n)
+                res = np.where(n < num_instances, n, num_instances)
+                labels = range(self.args.n_classes)
+                irec = sum([n[i] if n[i] <= num_instances[i] else num_instances[i] for i in labels]) / (
+                            self.args.batch_size * self.args.local_epochs)
+                print(num_instances)
+                print(n)
+                print('acc:', acc)
+                print('irec:', irec)
+                average_acc += acc
+                average_irec += irec
+                average_cAcc += cAcc
+
+                w_grad_epochs = torch.zeros([self.args.n_classes, latent_dim])
+                targets_epochs = []
+                self.load_model(global_weights)
+
+        average_acc = average_acc / count_computed
+        average_irec = average_irec / count_computed
+        average_cAcc = average_cAcc / count_computed
+
+        print('average acc:', average_acc)
+        print('average irec:', average_irec)
+        return average_cAcc, average_irec
+
+    # def ZLG(self, global_weights):
     #     self.model.train()
     #
     #     average_acc = 0
     #     average_irec = 0
     #     average_cAcc = 0
     #
-    #     for batch_idx, (inputs, targets) in enumerate(self.trainloader):
-    #         # measure data loading time
-    #         labels, existences, num_instances, num_instances_nonzero = get_label_stats(targets, args.n_classes)
+    #     count_computed = 0
     #
-    #         inputs, targets = inputs.cuda(), targets.cuda(non_blocking=True)
-    #         inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
+    #     count = 0
+    #     latent_dim = 4096
     #
-    #         # compute output
-    #         outputs, _ = self.model(inputs)
-    #         loss = self.criterion(outputs, targets)
+    #     w_grad_epochs = torch.zeros([args.n_classes, latent_dim])
+    #     targets_epochs = []
     #
-    #         grads = torch.autograd.grad(loss, self.model.fc.parameters())
-    #         grads = list((_.detach().cpu().clone() for _ in grads))
-    #         probs = torch.softmax(outputs, dim=-1)
-    #         preds = torch.max(probs, 1)[1].cpu()
-    #
-    #         w_grad, b_grad = grads[-2], grads[-1]
-    #
-    #         h1_extraction = []
-    #         impact_acc = 0
-    #
-    #         gradients_for_prediction = torch.sum(w_grad, dim=-1)
-    #         # filter negative values
-    #         for i_cg, class_gradient in enumerate(gradients_for_prediction):
-    #             if class_gradient < 0:
-    #                 h1_extraction.append((i_cg, class_gradient))
-    #                 impact_acc += class_gradient.item()
-    #
-    #         impact = (impact_acc / args.batch_size) * (1 + 1 / args.n_classes)
-    #
-    #         prediction = []
-    #
-    #         for (i_c, _) in h1_extraction:
-    #             prediction.append(i_c)
-    #             gradients_for_prediction[i_c] = gradients_for_prediction[i_c].add(-impact)
-    #
-    #         for _ in range(args.batch_size - len(prediction)):
-    #             # add minimal candidate, likely to be doubled, to prediction
-    #             min_id = torch.argmin(gradients_for_prediction).item()
-    #             prediction.append(min_id)
-    #
-    #             # add the mean value of one occurrence to the candidate
-    #             gradients_for_prediction[min_id] = gradients_for_prediction[min_id].add(-impact)
-    #
-    #         n = []
-    #         for i in range(args.n_classes):
-    #             n.append(prediction.count(i))
-    #
-    #         class_existences = [1 if n[i] > 0 else 0 for i in range(len(n))]
-    #         cAcc = accuracy_score(existences, class_existences)
-    #         acc = accuracy_score(num_instances, n)
-    #         res = np.where(n < num_instances, n, num_instances)
-    #         irec = sum([n[i] if n[i] <= num_instances[i] else num_instances[i] for i in labels]) / args.batch_size
-    #         print(num_instances)
-    #         print(n)
-    #         print('acc:', acc)
-    #         print('irec:', irec)
-    #         average_acc += acc
-    #         average_irec += irec
-    #         average_cAcc += cAcc
-    #
-    #     average_acc = average_acc / len(self.trainloader)
-    #     average_irec = average_irec / len(self.trainloader)
-    #     average_cAcc = average_cAcc / len(self.trainloader)
-    #
-    #     print('average acc:', average_acc)
-    #     print('average irec:', average_irec)
-    #     return average_cAcc, average_irec
-    #
-    # def LLGp(self):
-    #     self.model.train()
-    #
-    #     average_acc = 0
-    #     average_irec = 0
-    #     average_cAcc = 0
-    #
-    #     impact, offset = estimate_static_LLG(self.model)
+    #     O_bar, pj = estimate_static_ZLG(copy.deepcopy(self.model))
     #
     #     for batch_idx, (inputs, targets) in enumerate(self.trainloader):
     #         # measure data loading time
     #         labels, existences, num_instances, num_instances_nonzero = get_label_stats(targets, args.n_classes)
     #
     #         inputs, targets = inputs.cuda(), targets.cuda(non_blocking=True)
-    #         inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
-    #
+    #         targets_epochs.append(targets)
     #         # compute output
+    #         self.optimizer.zero_grad()
     #         outputs, _ = self.model(inputs)
     #         loss = self.criterion(outputs, targets)
+    #         loss.backward()
     #
-    #         grads = torch.autograd.grad(loss, self.model.fc.parameters())
-    #         grads = list((_.detach().cpu().clone() for _ in grads))
-    #         probs = torch.softmax(outputs, dim=-1)
-    #         preds = torch.max(probs, 1)[1].cpu()
+    #         self.optimizer.step()
     #
-    #         w_grad, b_grad = grads[-2], grads[-1]
-    #
-    #         h1_extraction = []
-    #
-    #         gradients_for_prediction = torch.sum(w_grad, dim=-1)
-    #
-    #         # filter negative values
-    #         for i_cg, class_gradient in enumerate(gradients_for_prediction):
-    #             if class_gradient < 0:
-    #                 h1_extraction.append((i_cg, class_gradient))
-    #
-    #         gradients_for_prediction -= offset
-    #
-    #         prediction = []
-    #
-    #         for (i_c, _) in h1_extraction:
-    #             prediction.append(i_c)
-    #             gradients_for_prediction[i_c] = gradients_for_prediction[i_c].add(-impact)
-    #
-    #         for _ in range(args.batch_size - len(prediction)):
-    #             # add minimal candidate, likely to be doubled, to prediction
-    #             min_id = torch.argmin(gradients_for_prediction).item()
-    #             prediction.append(min_id)
-    #
-    #             # add the mean value of one occurrence to the candidate
-    #             gradients_for_prediction[min_id] = gradients_for_prediction[min_id].add(-impact)
-    #
-    #         n = []
-    #         for i in range(args.n_classes):
-    #             n.append(prediction.count(i))
-    #
-    #         class_existences = [1 if n[i] > 0 else 0 for i in range(len(n))]
-    #         cAcc = accuracy_score(existences, class_existences)
-    #         acc = accuracy_score(num_instances, n)
-    #         res = np.where(n < num_instances, n, num_instances)
-    #         irec = sum([n[i] if n[i] <= num_instances[i] else num_instances[i] for i in labels]) / args.batch_size
-    #         print(num_instances)
-    #         print(n)
-    #         print('acc:', acc)
-    #         print('irec:', irec)
-    #         average_acc += acc
-    #         average_irec += irec
-    #         average_cAcc += cAcc
-    #
-    #     average_acc = average_acc / len(self.trainloader)
-    #     average_irec = average_irec / len(self.trainloader)
-    #     average_cAcc = average_cAcc / len(self.trainloader)
-    #
-    #     print('average acc:', average_acc)
-    #     print('average irec:', average_irec)
-    #     return average_cAcc, average_irec
-    #
-    # def ZLG(self):
-    #     self.model.train()
-    #
-    #     average_acc = 0
-    #     average_irec = 0
-    #     average_cAcc = 0
-    #
-    #     O_bar, pj = estimate_static_ZLG(self.model)
-    #     for batch_idx, (inputs, targets) in enumerate(self.trainloader):
-    #         # measure data loading time
-    #         labels, existences, num_instances, num_instances_nonzero = get_label_stats(targets, args.n_classes)
-    #
-    #         inputs, targets = inputs.cuda(), targets.cuda(non_blocking=True)
-    #         inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
-    #
-    #         # compute output
-    #         outputs, _ = self.model(inputs)
-    #         loss = self.criterion(outputs, targets)
-    #
-    #         grads = torch.autograd.grad(loss, self.model.fc.parameters())
-    #         grads = list((_.detach().cpu().clone() for _ in grads))
-    #         probs = torch.softmax(outputs, dim=-1)
-    #         preds = torch.max(probs, 1)[1].cpu()
+    #         grads = []
+    #         for param in self.model.fc.parameters():
+    #             grads.append(param.grad.detach().cpu().clone())
     #
     #         w_grad, b_grad = grads[-2], grads[-1]
+    #         w_grad_epochs += w_grad
+    #         count += 1
     #
-    #         gradients_for_prediction = torch.sum(w_grad, dim=-1)
+    #         if count == args.local_epochs:
+    #             new_O_bar, new_pj = estimate_static_ZLG(copy.deepcopy(self.model))
+    #             new_O_bar = (new_O_bar + O_bar) / 2
+    #             new_pj = (new_pj + pj) / 2
+    #             targets_epochs = torch.cat(targets_epochs, dim=0)
+    #             targets_epochs = targets_epochs.tolist()
+    #             num_instances = np.zeros(args.n_classes)
+    #             for k in range(args.n_classes):
+    #                 num_instances[k] = targets_epochs.count(k)
     #
-    #         n = np.zeros(args.n_classes)
-    #         for i in range(args.n_classes):
-    #             nj = pj[i].detach().cpu() - gradients_for_prediction[i] / O_bar.detach().cpu()
-    #             n[i] = np.max(nj.item(), 0)
-    #         n = n / np.sum(n)
-    #         n = n.tolist()
-    #         for i in range(args.n_classes):
-    #             n[i] = round(args.batch_size * n[i])
+    #             w_grad_epochs = w_grad_epochs / args.local_epochs
     #
-    #         class_existences = [1 if n[i] > 0 else 0 for i in range(len(n))]
-    #         cAcc = accuracy_score(existences, class_existences)
-    #         acc = accuracy_score(num_instances, n)
-    #         res = np.where(n < num_instances, n, num_instances)
-    #         irec = sum([n[i] if n[i] <= num_instances[i] else num_instances[i] for i in labels]) / args.batch_size
-    #         print(num_instances)
-    #         print(n)
-    #         print('acc:', acc)
-    #         print('irec:', irec)
-    #         average_acc += acc
-    #         average_irec += irec
-    #         average_cAcc += cAcc
+    #             count = 0
+    #             count_computed += 1
     #
-    #     average_acc = average_acc / len(self.trainloader)
-    #     average_irec = average_irec / len(self.trainloader)
-    #     average_cAcc = average_cAcc / len(self.trainloader)
+    #             gradients_for_prediction = torch.sum(w_grad_epochs, dim=-1)
+    #             n = []
+    #             for i in range(args.n_classes):
+    #                 nj = args.batch_size * args.local_epochs * (
+    #                             new_pj[i].detach().cpu() - gradients_for_prediction[i] / new_O_bar.detach().cpu())
+    #                 n.append(max(int(nj.item()), 0))
+    #
+    #             prop = (args.local_epochs * args.batch_size) / sum(n)
+    #             for i in range(args.n_classes):
+    #                 n[i] = round(n[i] * prop)
+    #
+    #             class_existences = [1 if n[i] > 0 else 0 for i in range(len(n))]
+    #             cAcc = accuracy_score(existences, class_existences)
+    #             acc = accuracy_score(num_instances, n)
+    #             res = np.where(n < num_instances, n, num_instances)
+    #             labels = range(args.n_classes)
+    #             irec = sum([n[i] if n[i] <= num_instances[i] else num_instances[i] for i in labels]) / (
+    #                         args.batch_size * args.local_epochs)
+    #             print(num_instances)
+    #             print(n)
+    #             print('acc:', acc)
+    #             print('irec:', irec)
+    #             average_acc += acc
+    #             average_irec += irec
+    #             average_cAcc += cAcc
+    #             w_grad_epochs = torch.zeros([args.n_classes, latent_dim])
+    #             targets_epochs = []
+    #             self.load_model(global_weights)
+    #
+    #     average_acc = average_acc / count_computed
+    #     average_irec = average_irec / count_computed
+    #     average_cAcc = average_cAcc / count_computed
     #
     #     print('average acc:', average_acc)
     #     print('average irec:', average_irec)
