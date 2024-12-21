@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from torchvision.datasets import ImageFolder
 from models import get_model
-from client.client_base import Client,Client_m
+from client.client_base import Client
 import random
 from utils import accuracy,average_weights,sum_list,global_acc
 
