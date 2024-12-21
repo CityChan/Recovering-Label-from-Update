@@ -27,26 +27,23 @@ After unzipping, place them in `data/` directory
 
 
 ## Run Attacks:
-#### For SVHN with single local epoch
-```
-python main.py --scheme iRLG --local_epoch 1 --dataset SVHN --momentum 0.0 --alpha 0.5 --batch_size 32 --model lenet5 --hidden 400
-python main.py --scheme RLU --local_epoch 1 --dataset SVHN --momentum 0.0 --alpha 0.5 --batch_size 32 --model lenet5 --hidden 400
-python main.py --scheme LLGp --local_epoch 1 --dataset SVHN --momentum 0.0 --alpha 0.5 --batch_size 32 --model lenet5 --hidden 400
-python main.py --scheme ZLGp --local_epoch 1 --dataset SVHN --momentum 0.0 --alpha 0.5 --batch_size 32 --model lenet5 --hidden 400
 
+#### For SVHN with multiple local epochs
 
 ```
+python main.py --scheme iRLG --local_epoch 10 --dataset SVHN --momentum 0.0 --alpha 0.5 --batch_size 32 --model lenet5 --hidden 400
+python main.py --scheme RLU --local_epoch 10 --dataset SVHN --momentum 0.0 --alpha 0.5 --batch_size 32 --model lenet5 --hidden 400
+python main.py --scheme LLGp --local_epoch 10 --dataset SVHN --momentum 0.0 --alpha 0.5 --batch_size 32 --model lenet5 --hidden 400
+python main.py --scheme ZLGp --local_epoch 10 --dataset SVHN --momentum 0.0 --alpha 0.5 --batch_size 32 --model lenet5 --hidden 400
+```
 
-#### For 10-split Tiny-ImageNet
+#### For CIFAR10 with multiple local epochs
 
 ```
-python main.py --device "1" --config ./configs/tinyimage10_duallora.json 
-```
-
-#### For 20-split Tiny-ImageNet
-
-```
-python main.py --device "2" --config ./configs/tinyimage20_duallora.json 
+python main.py --scheme iRLG --local_epoch 10 --dataset CIFAR10 --momentum 0.0 --alpha 0.5 --batch_size 64 --model vgg16 --hidden 512
+python main.py --scheme RLU --local_epoch 10 --dataset CIFAR10 --momentum 0.0 --alpha 0.5 --batch_size 64 --model vgg16 --hidden 512
+python main.py --scheme LLGp --local_epoch 10 --dataset CIFAR10 --momentum 0.0 --alpha 0.5 --batch_size 64 --model vgg16 --hidden 512
+python main.py --scheme ZLGp --local_epoch 10 --dataset CIFAR10 --momentum 0.0 --alpha 0.5 --batch_size 64 --model vgg16 --hidden 512
 ```
 
 #### For 5-split ImageNet-R
