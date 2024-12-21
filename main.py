@@ -100,6 +100,8 @@ for idx in range(args.n_clients):
         acc1, acc2 = Clients[idx].RLU(global_weights)
     if args.scheme == 'LLGp':
         acc1, acc2 = Clients[idx].LLGp(global_weights)
+    if args.scheme == 'ZLG':
+        acc1, acc2 = Clients[idx].ZLG(global_weights)
     cAcc.append(acc1)
     iAcc.append(acc2)
 average_cAcc = np.mean(np.array(cAcc))
