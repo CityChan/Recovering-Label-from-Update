@@ -50,7 +50,10 @@ def estimate_static_RLU_with_posterior(args, N, mu, new_mu, O):
         idx_max_larger = np.argmax(abs_larger)
         idx_max_larger_N = larger[idx_max_larger]
 
+
         while N[idx_max_larger_N] < unit:
+            print(N[idx_max_larger_N])
+            print(unit)
             abs_larger[idx_max_larger] = 0
             idx_max_larger = np.argmax(abs_larger)
             idx_max_larger_N = larger[idx_max_larger]
