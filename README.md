@@ -46,9 +46,12 @@ python main.py --scheme LLGp --local_epoch 10 --dataset CIFAR10 --momentum 0.0 -
 python main.py --scheme ZLGp --local_epoch 10 --dataset CIFAR10 --momentum 0.0 --alpha 0.5 --batch_size 64 --model vgg16 --hidden 512
 ```
 
-#### For 5-split ImageNet-R
+#### For CIFAR100 with multiple local epochs
 ```
-python main.py --device "3" --config ./configs/mimg5_duallora.json 
+python main.py --scheme iRLG --local_epoch 10 --dataset CIFAR100 --n_classes 100 --momentum 0.0 --alpha 0.1 --batch_size 256 --model vgg16 --hidden 512
+python main.py --scheme RLU --local_epoch 10 --dataset CIFAR100 --n_classes 100 --momentum 0.0 --alpha 0.1 --batch_size 256 --model vgg16 --hidden 512
+python main.py --scheme LLGp --local_epoch 10 --dataset CIFAR100 --n_classes 100 --momentum 0.0 --alpha 0.1 --batch_size 256 --model vgg16 --hidden 512
+python main.py --scheme ZLGp --local_epoch 10 --dataset CIFAR100 --n_classes 100 --momentum 0.0 --alpha 0.1 --batch_size 256 --model vgg16 --hidden 512
 ```
 
 #### For 10-split ImageNet-R
