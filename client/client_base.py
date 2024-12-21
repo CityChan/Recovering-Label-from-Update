@@ -365,11 +365,11 @@ class Client(object):
         w_grad_epochs = torch.zeros([self.args.n_classes, self.latent_dim])
         targets_epochs = []
 
-        O_bar, pj = estimate_static_ZLG(copy.deepcopy(self.model))
+        O_bar, pj = estimate_static_ZLG(self.args, copy.deepcopy(self.model), self.aux_dataset)
 
         for batch_idx, (inputs, targets) in enumerate(self.trainloader):
             # measure data loading time
-            labels, existences, num_instances, num_instances_nonzero = get_label_stats(targets, args.n_classes)
+            labels, existences, num_instances, num_instances_nonzero = get_label_stats(targets, self.args.n_classes)
 
             inputs, targets = inputs.cuda(), targets.cuda(non_blocking=True)
             targets_epochs.append(targets)
@@ -390,7 +390,7 @@ class Client(object):
             count += 1
 
             if count == self.args.local_epochs:
-                new_O_bar, new_pj = estimate_static_ZLG(copy.deepcopy(self.model))
+                new_O_bar, new_pj = estimate_static_ZLG(self.args,copy.deepcopy(self.model), self.aux_dataset)
                 new_O_bar = (new_O_bar + O_bar) / 2
                 new_pj = (new_pj + pj) / 2
                 targets_epochs = torch.cat(targets_epochs, dim=0)
