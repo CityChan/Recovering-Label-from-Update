@@ -10,7 +10,7 @@ pip3 install torch torchvision torchaudio --index-url https://download.pytorch.o
 ```
 
 ## Dataset Preparing:
-* Create directory `mkdir data`
+* Create directory `mkdir data` and subdirectory `mkdir data/data_partitions`
 * **SVHN/CIFAR10/CIFAR100**: should automatically be downloaded
 * **TinyImageNet**: download dataset from http://cs231n.stanford.edu/tiny-imagenet-200.zip.
   
