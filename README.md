@@ -28,7 +28,7 @@ After unzipping, place them in `data/` directory
 
 ## Run Attacks:
 
-#### For SVHN with multiple local epochs
+#### For SVHN with multiple local epochs with FedAvg
 
 ```
 python main.py --scheme iRLG --local_epoch 10 --dataset SVHN --momentum 0.0 --alpha 0.5 --batch_size 32 --model lenet5 --hidden 400
@@ -37,7 +37,7 @@ python main.py --scheme LLGp --local_epoch 10 --dataset SVHN --momentum 0.0 --al
 python main.py --scheme ZLGp --local_epoch 10 --dataset SVHN --momentum 0.0 --alpha 0.5 --batch_size 32 --model lenet5 --hidden 400
 ```
 
-#### For CIFAR10 with multiple local epochs
+#### For CIFAR10 with multiple local epochs with FedAvg
 
 ```
 python main.py --scheme iRLG --local_epoch 10 --dataset CIFAR10 --momentum 0.0 --alpha 0.5 --batch_size 64 --model vgg16 --hidden 512
@@ -46,7 +46,7 @@ python main.py --scheme LLGp --local_epoch 10 --dataset CIFAR10 --momentum 0.0 -
 python main.py --scheme ZLGp --local_epoch 10 --dataset CIFAR10 --momentum 0.0 --alpha 0.5 --batch_size 64 --model vgg16 --hidden 512
 ```
 
-#### For CIFAR100 with multiple local epochs
+#### For CIFAR100 with multiple local epochs with FedAvg
 ```
 python main.py --scheme iRLG --local_epoch 10 --dataset CIFAR100 --n_classes 100 --momentum 0.0 --alpha 0.1 --batch_size 256 --model vgg16 --hidden 512
 python main.py --scheme RLU --local_epoch 10 --dataset CIFAR100 --n_classes 100 --momentum 0.0 --alpha 0.1 --batch_size 256 --model vgg16 --hidden 512
@@ -54,14 +54,28 @@ python main.py --scheme LLGp --local_epoch 10 --dataset CIFAR100 --n_classes 100
 python main.py --scheme ZLGp --local_epoch 10 --dataset CIFAR100 --n_classes 100 --momentum 0.0 --alpha 0.1 --batch_size 256 --model vgg16 --hidden 512
 ```
 
-#### For 10-split ImageNet-R
+#### For SVHN with multiple local epochs with FedProx
 
 ```
-python main.py --device "4" --config ./configs/mimg10_duallora.json 
+python main.py --scheme iRLG --local_epoch 10 --dataset SVHN --momentum 0.0 --fl_scheme fedprox --mu 0.5 --alpha 0.5 --batch_size 32 --model lenet5 --hidden 400
+python main.py --scheme RLU --local_epoch 10 --dataset SVHN --momentum 0.0 --fl_scheme fedprox --mu 0.5 --alpha 0.5 --batch_size 32 --model lenet5 --hidden 400
+python main.py --scheme LLGp --local_epoch 10 --dataset SVHN --momentum 0.0 --fl_scheme fedprox --mu 0.5 --alpha 0.5 --batch_size 32 --model lenet5 --hidden 400
+python main.py --scheme ZLGp --local_epoch 10 --dataset SVHN --momentum 0.0 --fl_scheme fedprox --mu 0.5 --alpha 0.5 --batch_size 32 --model lenet5 --hidden 400
 ```
 
-#### For 20-split ImageNet-R
+#### For CIFAR10 with multiple local epochs with FedProx
 
 ```
-python main.py --device "5" --config ./configs/mimg20_duallora.json 
+python main.py --scheme iRLG --local_epoch 10 --dataset CIFAR10 --momentum 0.0 --fl_scheme fedprox --mu 0.5 --alpha 0.5 --batch_size 64 --model vgg16 --hidden 512
+python main.py --scheme RLU --local_epoch 10 --dataset CIFAR10 --momentum 0.0 --fl_scheme fedprox --mu 0.5 --alpha 0.5 --batch_size 64 --model vgg16 --hidden 512
+python main.py --scheme LLGp --local_epoch 10 --dataset CIFAR10 --momentum 0.0 --fl_scheme fedprox --mu 0.5 --alpha 0.5 --batch_size 64 --model vgg16 --hidden 512
+python main.py --scheme ZLGp --local_epoch 10 --dataset CIFAR10 --momentum 0.0 --fl_scheme fedprox --mu 0.5 --alpha 0.5 --batch_size 64 --model vgg16 --hidden 512
+```
+
+#### For CIFAR100 with multiple local epochs with FedProx
+```
+python main.py --scheme iRLG --local_epoch 10 --dataset CIFAR100 --n_classes 100 --momentum 0.0 --fl_scheme fedprox --mu 0.5 --alpha 0.1 --batch_size 256 --model vgg16 --hidden 512
+python main.py --scheme RLU --local_epoch 10 --dataset CIFAR100 --n_classes 100 --momentum 0.0 --fl_scheme fedprox --mu 0.5 --alpha 0.1 --batch_size 256 --model vgg16 --hidden 512
+python main.py --scheme LLGp --local_epoch 10 --dataset CIFAR100 --n_classes 100 --momentum 0.0 --fl_scheme fedprox --mu 0.5 --alpha 0.1 --batch_size 256 --model vgg16 --hidden 512
+python main.py --scheme ZLGp --local_epoch 10 --dataset CIFAR100 --n_classes 100 --momentum 0.0 --fl_scheme fedprox --mu 0.5 --alpha 0.1 --batch_size 256 --model vgg16 --hidden 512
 ```
