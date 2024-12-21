@@ -79,3 +79,13 @@ python main.py --scheme RLU --local_epoch 10 --dataset CIFAR100 --n_classes 100 
 python main.py --scheme LLGp --local_epoch 10 --dataset CIFAR100 --n_classes 100 --momentum 0.0 --fl_scheme fedprox --mu 0.5 --alpha 0.1 --batch_size 256 --model vgg16 --hidden 512
 python main.py --scheme ZLGp --local_epoch 10 --dataset CIFAR100 --n_classes 100 --momentum 0.0 --fl_scheme fedprox --mu 0.5 --alpha 0.1 --batch_size 256 --model vgg16 --hidden 512
 ```
+#### Citeation
+Please cite our paper, if you happen to use this code:
+```
+@article{chen2024recovering,
+  title={Recovering Labels from Local Updates in Federated Learning},
+  author={Chen, Huancheng and Vikalo, Haris},
+  journal={arXiv preprint arXiv:2405.00955},
+  year={2024}
+}
+```
