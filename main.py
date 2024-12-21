@@ -9,6 +9,7 @@ from torchvision.datasets import ImageFolder
 from models import get_model
 from client.client_base import Client
 import random
+from utils import accuracy,average_weights,sum_list,global_acc
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
@@ -70,6 +71,7 @@ for k in range(K):
 
 aux_dict = np.concatenate(aux_dict)
 aux_dataset = LocalDataset(test_dataset, aux_dict)
+total_loader_train = torch.utils.data.DataLoader(total_train_dataset, batch_size=args.batch_size,shuffle=True)
 
 # create global model
 channel = 3
@@ -88,6 +90,26 @@ print("==> creating models")
 Clients = []
 for idx in range(args.n_clients):
     Clients.append(Client(args, Loaders_train[idx], idx, device, args.model, aux_dataset))
+
+# Attacking after training the global model
+# args.epochs = 0
+# for epoch in range(args.epochs):
+#     local_weights = []
+#     clients_models = []
+#     global_model.train()
+#     print(f'\n | Global Training Round : {epoch+1} |\n')
+#
+#     sampled_clients = np.random.choice(args.n_clients, K , replace=False)
+#     for idx in sampled_clients:
+#         Clients[idx].load_model(global_weights)
+#         Clients[idx].local_training(epoch)
+#         local_weights.append(Clients[idx].model.state_dict())
+#         clients_models.append(copy.deepcopy(Clients[idx].model))
+#
+#     global_weights = average_weights(local_weights)
+#     global_model.load_state_dict(global_weights)
+#     acc_top1, acc_top5 = global_acc(global_model, total_loader_train)
+#     print(f'Top 1 training accuracy: {acc_top1}, Top 5 accuracy: {acc_top5}  at global round {epoch}.')
 
 cAcc = []
 iAcc = []
