@@ -173,7 +173,7 @@ def estimate_static_LLG(args, model,aux_data):
     offset = torch.zeros(args.n_classes)
     label_dict = {}
 
-    y_aux = np.array(aux_data.targets)
+    y_aux = np.array(aux_data.dataset.targets)
     K = args.n_classes
     for k in range(K):
         idx_k = np.where(y_aux == k)[0]
