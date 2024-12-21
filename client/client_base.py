@@ -259,7 +259,7 @@ class Client(object):
         w_grad_epochs = torch.zeros([self.args.n_classes, latent_dim])
         targets_epochs = []
 
-        impact, offset = estimate_static_LLG(copy.deepcopy(self.model))
+        impact, offset = estimate_static_LLG(self.args, copy.deepcopy(self.model), self.aux_dataset)
 
         for batch_idx, (inputs, targets) in enumerate(self.trainloader):
             # measure data loading time
