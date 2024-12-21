@@ -21,9 +21,9 @@ After unzipping, place them in `data/` directory
 * `DataSampling.py`: this file is relevant to data partions for federated learning
 * `models.py`: this file define models for different experiments. Please change the activation functions if needed.
 * `utils.py`: general utilization 
-* `llg.py`: this is adapted from the scheme [LLG](https://github.com/tklab-tud/LLG)
-* **models**: for each method, we defined adaptive model structure.
-* **utils**: this directory contain utilization functions needed in the traing including: creating continual learning data partitions, computing accuracy.
+* `llg.py`: this is adapted from the attack scheme [LLG](https://github.com/tklab-tud/LLG)
+* **./client**: for each method, we defined adaptive client objects. We currently only release FedAvg and FedProx. FedDyn and Scaffold will be soon.
+* `./client/client_utils.py`: utilization for the attacking schemes
 
 
 ## Run Training:
