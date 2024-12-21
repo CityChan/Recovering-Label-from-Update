@@ -36,8 +36,7 @@ class Client(object):
                                leaky_relu=False).cuda()
 
         self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = optim.SGD(self.model.parameters(), lr=args.lr, momentum=args.momentum,
-                                   weight_decay=args.weight_decay)
+        self.optimizer = optim.SGD(self.model.parameters(), lr=args.lr, momentum=args.momentum)
         if args.model == 'resnet18':
             self.latent_dim = 512
         if args.model == 'vgg16':
