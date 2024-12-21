@@ -95,9 +95,6 @@ global_weights = global_model.state_dict()
 print("==> creating models")
 Clients = []
 for idx in range(args.n_clients):
-    if args.fl_scheme == 'sgdm':
-        Clients.append(Client_m(args, Loaders_train[idx], idx, device, args.model, aux_dataset))
-    else:
         Clients.append(Client(args, Loaders_train[idx], idx, device, args.model, aux_dataset))
 
 # Attacking after training the global model
